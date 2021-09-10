@@ -14,7 +14,7 @@ namespace VaccinationScheduling.Offline
             int jobCount = ReadUtils.ReadNumber();
 
             _jobs = Enumerable.Range(0, jobCount).Select(_ => ReadUtils.ReadJob()).ToArray();
-            
+
             // TODO Schedule
             // TODO Output
         }

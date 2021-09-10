@@ -14,13 +14,13 @@
         /// The patient-dependent delay.
         /// How long you have to wait after the gap before you can give the second shot.
         /// </summary>
-        public int X { get;  }
+        public int X { get; }
 
         /// <summary>
         /// The patient-dependent (second) feasible interval length.
         /// How long you have to vaccinate the patient after his delay.
         /// </summary>
-        public int L { get;  }
+        public int L { get; }
 
         public Job((int start, int end) i1, int x, int l)
         {
