@@ -1,44 +1,22 @@
-﻿using System;
-using System.Collections.Generic;
-using System.IO;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
+﻿using System.Linq;
 using VaccinationScheduling.Shared;
 
 namespace VaccinationScheduling.Offline
 {
-    internal class Program
+    public static class Program
     {
-        private int tFirstDose;
-        private int tSecondDose;
-        private int tGap;
-        private int nrPatients;
+        private static Global _global;
+        private static Job[] _jobs;
 
-        private Patient[] patients;
-
-        public Program()
+        public static void Main()
         {
-            ReadUtils.SetInput(false);
-            (tFirstDose, tSecondDose, tGap, nrPatients) = ReadUtils.ParseGeneralInformation(false);
+            _global = ReadUtils.ReadGlobal();
+            int jobCount = ReadUtils.ReadNumber();
 
-            patients = new Patient[nrPatients];
-            for (int i = 0; i < nrPatients; i++)
-            {
-                patients[i] = ReadUtils.ParsePatient();
-            }
-
+            _jobs = Enumerable.Range(0, jobCount).Select(_ => ReadUtils.ReadJob()).ToArray();
+            
             // TODO Schedule
             // TODO Output
-
-            Console.Write(nrPatients);
-            Console.Write(nrPatients);
-        }
-
-        private static void Main()
-        {
-            // Easy way to get out of static
-            new Program();
         }
     }
 }

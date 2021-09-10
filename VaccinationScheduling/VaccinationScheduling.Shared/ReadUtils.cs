@@ -1,69 +1,33 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.IO;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace VaccinationScheduling.Shared
 {
     public static class ReadUtils
     {
-        public static void SetInput(bool online)
+        /// <summary>
+        /// Read the global variables.
+        /// </summary>
+        /// <returns>The global variables.</returns>
+        public static Global ReadGlobal()
         {
-            // Automatically parse input file depending on what key is pressed
-            // For example, pressing 0 will instantly read Input/0.in
-            string file = Console.ReadKey().KeyChar.ToString();
-            string fileName;
-
-            if (online)
-            {
-                fileName = $"..\\..\\..\\..\\..\\Input\\Online\\{file}.in";
-            }
-            else
-            {
-                fileName = $"..\\..\\..\\..\\..\\Input\\Offline\\{file}.in";
-            }
-
-            Console.SetIn(new StreamReader(fileName));
-            Console.WriteLine();
+            return new Global(ReadNumber(), ReadNumber(), ReadNumber());
         }
 
-        public static (int, int, int, int) ParseGeneralInformation(bool online)
+        /// <summary>
+        /// Read a job.
+        /// Will trow an exception if no more patients are added in online mode.
+        /// </summary>
+        /// <returns>The job.</returns>
+        public static Job ReadJob()
         {
-            // Read and return first 4 lines of input
-            int tFirstDose = int.Parse(Console.ReadLine());
-            int tSecondDose = int.Parse(Console.ReadLine());
-            int tGap = int.Parse(Console.ReadLine());
-
-            if (online)
-            {
-                return (tFirstDose, tSecondDose, tGap, 0);
-            }
-
-            int nrPatients = int.Parse(Console.ReadLine());
-            return (tFirstDose, tSecondDose, tGap, nrPatients);
+            string[] values = Console.ReadLine()!.Split(',');
+            return new Job((int.Parse(values[0]), int.Parse(values[1])), int.Parse(values[2]), int.Parse(values[3]));
         }
 
-        public static Patient? ParsePatient()
-        {
-            // Parse patient line in input
-            string[] values = Console.ReadLine().Split(',');
-
-            // No more patient to read, final line is x
-            if (values.Length == 1)
-            {
-                return null;
-            }
-
-            Patient patient = new Patient(
-                int.Parse(values[0]),
-                int.Parse(values[1]),
-                int.Parse(values[2]),
-                int.Parse(values[3])
-            );
-
-            return patient;
-        }
+        /// <summary>
+        /// Read a number from the console.
+        /// </summary>
+        /// <returns>The number.</returns>
+        public static int ReadNumber() => int.Parse(Console.ReadLine()!);
     }
 }

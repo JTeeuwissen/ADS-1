@@ -1,52 +1,36 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.IO;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 using VaccinationScheduling.Shared;
 
 namespace VaccinationScheduling.Online
 {
-    internal class Program
+    public class Program
     {
-        private int tFirstDose;
-        private int tSecondDose;
-        private int tGap;
-        private int currentPatientNr;
+        private static Global _global;
+        private static List<Job> _jobs = new();
 
-        private List<Patient> patients = new List<Patient>();
-
-        public Program()
+        public static void Main()
         {
-            ReadUtils.SetInput(true);
-            (tFirstDose, tSecondDose, tGap, currentPatientNr) = ReadUtils.ParseGeneralInformation(true);
+            _global = ReadUtils.ReadGlobal();
 
             while (true)
             {
-                Patient patient = ReadUtils.ParsePatient();
-
-                // There are no more patients
-                if (patient == null)
+                try
                 {
+                    Job job = ReadUtils.ReadJob();
+                    _jobs.Add(job);
+                }
+                catch (Exception e)
+                {
+                    // There are no more patients
+                    Console.WriteLine(e);
                     break;
                 }
 
-                patients.Add(patient);
-
                 // TODO Schedule
-
-                currentPatientNr++;
             }
 
             // TODO Output
-        }
-
-
-        private static void Main()
-        {
-            // Easy way to get out of static
-            new Program();
         }
     }
 }
