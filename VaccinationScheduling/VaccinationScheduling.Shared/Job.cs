@@ -3,15 +3,28 @@
 namespace VaccinationScheduling.Shared
 {
     // Using class so it is nullable
-    public class Patient : IComparable<Patient>
+    /// <summary>
+    /// Represents one patient
+    /// </summary>
+    public class Job : IComparable<Job>
     {
         // Instead of using the parsed values, we pre-calculate when we can schedule
-        // What is the minimum and maximum start T of the first dose interval
+        /// <summary>
+        /// Minimum time at which the first interval starts
+        /// </summary>
         public int MinFirstIntervalStart;
+        /// <summary>
+        /// Maximum time at which the first interval starts
+        /// </summary>
         public int MaxFirstIntervalStart;
 
-        // What is the minimum and maximum Gap between the first and second dose
+        /// <summary>
+        /// The minimum gap between the first and the second interval
+        /// </summary>
         public int MinGapIntervalStarts;
+        /// <summary>
+        /// The maximum gap between the first and the second interval
+        /// </summary>
         public int MaxGapIntervalStarts;
 
         // Do NOT use these for the main program
@@ -29,12 +42,12 @@ namespace VaccinationScheduling.Shared
         /// <param name="firstIntervalEnd">Last slot patient is available in for the first jab</param>
         /// <param name="secondIntervalLength">Second slot length patient is available at</param>
         /// <param name="extraDelay">The extra delay that the patient wants between the jabs</param>
-        public Patient(Parameters parameters, int firstIntervalStart, int firstIntervalEnd, int secondIntervalLength, int extraDelay)
+        public Job(Global global, int firstIntervalStart, int firstIntervalEnd, int secondIntervalLength, int extraDelay)
         {
             MinFirstIntervalStart = firstIntervalStart;
-            MaxFirstIntervalStart = firstIntervalEnd - parameters.TFirstDose + 1;
-            MinGapIntervalStarts = parameters.TGap + extraDelay + parameters.TFirstDose;
-            MaxGapIntervalStarts = MinGapIntervalStarts + secondIntervalLength - parameters.TSecondDose - 1;
+            MaxFirstIntervalStart = firstIntervalEnd - global.TFirstDose + 1;
+            MinGapIntervalStarts = global.TGap + extraDelay + global.TFirstDose;
+            MaxGapIntervalStarts = MinGapIntervalStarts + secondIntervalLength - global.TSecondDose - 1;
 
             // DO NOT USE THESE VARIABLES
             // Only for later verification of the answer
@@ -53,7 +66,7 @@ namespace VaccinationScheduling.Shared
         /// ret<0 This one predecends other
         /// ret>0 This one follows other
         /// </returns>
-        public int CompareTo(Patient? other)
+        public int CompareTo(Job? other)
         {
             // Always is before a null patient
             if (other == null)

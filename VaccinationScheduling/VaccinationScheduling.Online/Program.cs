@@ -1,49 +1,25 @@
-﻿using System;
-using System.Collections.Generic;
-using System.IO;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-using VaccinationScheduling.Shared;
+﻿using VaccinationScheduling.Shared;
 
 namespace VaccinationScheduling.Online
 {
-    internal class Program
+    public class Program
     {
-        private Parameters parameters;
-        private int currentPatientNr;
-
-        private List<Patient> patients = new List<Patient>();
+        private Global global;
+        private JobEnumerable jobs;
 
         public Program()
         {
-            ReadUtils.SetInput(true);
-            (parameters, currentPatientNr) = ReadUtils.ParseGeneralInformation(true);
+            global = ReadUtils.ReadGlobal();
+            jobs = new JobEnumerable(global);
 
-            while (true)
-            {
-                Patient patient = ReadUtils.ParsePatient(parameters);
-
-                // There are no more patients
-                if (patient == null)
-                {
-                    break;
-                }
-
-                patients.Add(patient);
-
-                // TODO Schedule
-
-                currentPatientNr++;
-            }
-
+            // TODO loop through
+            // TODO Schedule
             // TODO Output
         }
 
-
-        private static void Main()
+        public static void Main()
         {
-            // Easy way to get out of static
+            // Escape the static environment
             new Program();
         }
     }

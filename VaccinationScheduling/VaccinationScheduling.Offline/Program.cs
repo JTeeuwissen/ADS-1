@@ -1,44 +1,26 @@
-﻿using System;
-using System.Collections.Generic;
-using System.IO;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
+﻿using System.Linq;
 using VaccinationScheduling.Shared;
 
 namespace VaccinationScheduling.Offline
 {
-    internal class Program
+    public class Program
     {
-        private Parameters parameters;
-        private int nrPatients;
-
-        private Patient[] patients;
+        private Global global;
+        private Job[] jobs;
 
         public Program()
         {
-            ReadUtils.SetInput(false);
-            (parameters, nrPatients) = ReadUtils.ParseGeneralInformation(false);
+            global = ReadUtils.ReadGlobal();
+            int jobCount = ReadUtils.ReadNumber();
 
-            List<Patient> patientsList = new List<Patient>(nrPatients);
-            for (int i = 0; i < nrPatients; i++)
-            {
-                patients[i] = ReadUtils.ParsePatient(parameters);
-            }
+            jobs = Enumerable.Range(0, jobCount).Select(_ => ReadUtils.ReadJob(global)).ToArray();
 
-            // Sort the input
-            patientsList.Sort();
-            patients = patientsList.ToArray();
-
-            for (int i = 0; i < nrPatients; i++)
-            {
-
-            }
+            // TODO Sort jobs
             // TODO Schedule
             // TODO Output
         }
 
-        private static void Main()
+        public static void Main()
         {
             // Easy way to get out of static
             new Program();

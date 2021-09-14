@@ -43,7 +43,7 @@ namespace InputGenerator
             string dirName = online ? "Online" : "Offline";
 
             // Write the file with the given settings
-            using (StreamWriter outputFile = new StreamWriter($"../../../../../Input/{dirName}/{fileName}", true))
+            using (StreamWriter outputFile = new StreamWriter($"../../../../VaccinationScheduling.Tests/Input/{dirName}/{fileName}", true))
             {
                 PrintSettings(outputFile);
                 PrintPatients(outputFile);

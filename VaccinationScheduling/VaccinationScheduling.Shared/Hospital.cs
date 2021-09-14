@@ -9,15 +9,15 @@ namespace VaccinationScheduling.Shared
 {
     public class Hospital
     {
-        private Parameters parameters;
+        private Global global;
 
         public int HospitalIndex = 0;
         public RedBlackTree<Timeslot> Schedule = new RedBlackTree<Timeslot>(Comparer<Timeslot>.Default);
 
-        public Hospital(int hospitalIndex, Parameters parameters)
+        public Hospital(int hospitalIndex, Global global)
         {
             HospitalIndex = hospitalIndex;
-            this.parameters = parameters;
+            this.global = global;
         }
 
         /// <summary>
@@ -25,7 +25,7 @@ namespace VaccinationScheduling.Shared
         /// Sofar it does it in a greedy way. If it fits then add the patient.
         /// </summary>
         /// <returns>Whether patient has been succesfully added</returns>
-        public bool GreedyAddPatient(Patient patient)
+        public bool GreedyAddPatient(Job patient)
         {
             // TODO: Probably need to implement custom method in RedBlackTree to make this coming double loop efficient.
             Timeslot start = new Timeslot(0, patient.MinFirstIntervalStart, patient.MinFirstIntervalStart + 1, false);
