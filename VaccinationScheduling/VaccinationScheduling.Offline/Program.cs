@@ -10,9 +10,7 @@ namespace VaccinationScheduling.Offline
 {
     internal class Program
     {
-        private int tFirstDose;
-        private int tSecondDose;
-        private int tGap;
+        private Parameters parameters;
         private int nrPatients;
 
         private Patient[] patients;
@@ -20,19 +18,24 @@ namespace VaccinationScheduling.Offline
         public Program()
         {
             ReadUtils.SetInput(false);
-            (tFirstDose, tSecondDose, tGap, nrPatients) = ReadUtils.ParseGeneralInformation(false);
+            (parameters, nrPatients) = ReadUtils.ParseGeneralInformation(false);
 
-            patients = new Patient[nrPatients];
+            List<Patient> patientsList = new List<Patient>(nrPatients);
             for (int i = 0; i < nrPatients; i++)
             {
-                patients[i] = ReadUtils.ParsePatient();
+                patients[i] = ReadUtils.ParsePatient(parameters);
             }
 
+            // Sort the input
+            patientsList.Sort();
+            patients = patientsList.ToArray();
+
+            for (int i = 0; i < nrPatients; i++)
+            {
+
+            }
             // TODO Schedule
             // TODO Output
-
-            Console.Write(nrPatients);
-            Console.Write(nrPatients);
         }
 
         private static void Main()

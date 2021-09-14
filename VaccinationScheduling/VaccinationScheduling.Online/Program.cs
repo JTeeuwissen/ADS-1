@@ -10,9 +10,7 @@ namespace VaccinationScheduling.Online
 {
     internal class Program
     {
-        private int tFirstDose;
-        private int tSecondDose;
-        private int tGap;
+        private Parameters parameters;
         private int currentPatientNr;
 
         private List<Patient> patients = new List<Patient>();
@@ -20,11 +18,11 @@ namespace VaccinationScheduling.Online
         public Program()
         {
             ReadUtils.SetInput(true);
-            (tFirstDose, tSecondDose, tGap, currentPatientNr) = ReadUtils.ParseGeneralInformation(true);
+            (parameters, currentPatientNr) = ReadUtils.ParseGeneralInformation(true);
 
             while (true)
             {
-                Patient patient = ReadUtils.ParsePatient();
+                Patient patient = ReadUtils.ParsePatient(parameters);
 
                 // There are no more patients
                 if (patient == null)

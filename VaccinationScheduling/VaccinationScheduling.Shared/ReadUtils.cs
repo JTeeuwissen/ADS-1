@@ -29,23 +29,24 @@ namespace VaccinationScheduling.Shared
             Console.WriteLine();
         }
 
-        public static (int, int, int, int) ParseGeneralInformation(bool online)
+        public static (Parameters, int) ParseGeneralInformation(bool online)
         {
             // Read and return first 4 lines of input
             int tFirstDose = int.Parse(Console.ReadLine());
             int tSecondDose = int.Parse(Console.ReadLine());
             int tGap = int.Parse(Console.ReadLine());
+            Parameters parameters = new Parameters(tFirstDose, tSecondDose, tGap);
 
             if (online)
             {
-                return (tFirstDose, tSecondDose, tGap, 0);
+                return (parameters, 0);
             }
 
             int nrPatients = int.Parse(Console.ReadLine());
-            return (tFirstDose, tSecondDose, tGap, nrPatients);
+            return (parameters, nrPatients);
         }
 
-        public static Patient? ParsePatient()
+        public static Patient? ParsePatient(Parameters parameters)
         {
             // Parse patient line in input
             string[] values = Console.ReadLine().Split(',');
@@ -56,14 +57,14 @@ namespace VaccinationScheduling.Shared
                 return null;
             }
 
-            Patient patient = new Patient(
+            // Return created patient
+            return new Patient(
+                parameters,
                 int.Parse(values[0]),
                 int.Parse(values[1]),
                 int.Parse(values[2]),
                 int.Parse(values[3])
             );
-
-            return patient;
         }
     }
 }
