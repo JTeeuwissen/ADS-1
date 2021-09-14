@@ -22,6 +22,14 @@
         /// </summary>
         public int M2 { get; set; }
 
+        public Schedule(int t1, int m1, int t2, int m2)
+        {
+            T1 = t1;
+            M1 = m1;
+            T2 = t2;
+            M2 = m2;
+        }
+
         /// <summary>
         /// Format the schedule to the desired output.
         /// </summary>
