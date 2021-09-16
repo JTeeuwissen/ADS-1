@@ -8,12 +8,7 @@
 
 // License link: https://www.nuget.org/packages/SoftUni.Wintellect.PowerCollections/2.0.0
 
-using System;
-using System.Collections.Generic;
 using System.Diagnostics;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace VaccinationScheduling.Shared.RedBlackTree
 {
