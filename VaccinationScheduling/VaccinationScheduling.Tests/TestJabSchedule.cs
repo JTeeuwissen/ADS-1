@@ -15,7 +15,7 @@ namespace VaccinationScheduling.Tests
 
             JabSchedule jabSchedule = new(global);
 
-            jabSchedule.Add(JabEnum.JabOne, (10, 10), new Job(global,1, 2, 3, 4));
+            jabSchedule.Add(JabEnum.JabOne, (10, 10), new Job(global, 1, 2, 3, 4));
             jabSchedule.Add(JabEnum.JabOne, (20, 20), new Job(global, 2, 3, 4, 5));
             jabSchedule.Add(JabEnum.JabOne, (40, 40), new Job(global, 3, 4, 5, 6));
             jabSchedule.Add(JabEnum.JabOne, (50, 50), new Job(global, 4, 5, 6, 7));
@@ -44,7 +44,16 @@ namespace VaccinationScheduling.Tests
             Assert.Equal(3, single2.Single().MaxFirstIntervalStart);
 
             // 20-20 is not in this collection due to the request being bigger than the jab size
-            Assert.Equal(2, jabSchedule.Get((10, 40)).Count()); 
+            Assert.Equal(2, jabSchedule.Get((10, 40)).Count());
+
+            Assert.False(jabSchedule.Remove((10, 10), JabEnum.JabTwo));
+            Assert.Equal(2, jabSchedule.Get((10, 40)).Count());
+
+
+            Assert.True(jabSchedule.Remove((10, 10), JabEnum.JabOne));
+            Assert.Single(jabSchedule.Get((10, 40)));
+
+            Assert.True(jabSchedule.Remove((40, 40)));
         }
     }
 }

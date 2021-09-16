@@ -1,4 +1,5 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 using System.Linq;
 using System.Numerics;
 
@@ -7,8 +8,10 @@ namespace VaccinationScheduling.Shared.JabSchedule
     public class JabSchedule
     {
         private readonly Global _global;
+
         private readonly HashSet<Slot> _startjabOne = new();
         private readonly HashSet<Slot> _endjabOne = new();
+
         private readonly HashSet<Slot> _startjabTwo = new();
         private readonly HashSet<Slot> _endjabTwo = new();
 
@@ -48,6 +51,29 @@ namespace VaccinationScheduling.Shared.JabSchedule
                 _startjabTwo.Add(new SlotWithJob(range.start / _global.TSecondDose, range, job));
                 _endjabTwo.Add(new SlotWithJob(range.end / _global.TSecondDose, range, job));
             }
+        }
+
+        public bool Remove((BigInteger start, BigInteger end) range, JabEnum? jabEnum = null)
+        {
+            bool removed = false;
+
+            if (jabEnum is not { } or JabEnum.JabOne)
+            {
+                bool startJabOneRemoved = _startjabOne.Remove(new Slot(range.start / _global.TFirstDose, range));
+                bool endJabOneRemoved = _endjabOne.Remove(new Slot(range.end / _global.TFirstDose, range));
+                if (startJabOneRemoved != endJabOneRemoved) throw new Exception("Both items should be removed");
+                if (startJabOneRemoved) removed = true;
+            }
+
+            if (jabEnum is not { } or JabEnum.JabTwo)
+            {
+                bool startJabtwoRemoved = _startjabTwo.Remove(new Slot(range.start / _global.TSecondDose, range));
+                bool endJabTwoRemoved = _endjabTwo.Remove(new Slot(range.end / _global.TSecondDose, range));
+                if (startJabtwoRemoved != endJabTwoRemoved) throw new Exception("Both items should be removed");
+                if (startJabtwoRemoved) removed = true;
+            }
+
+            return removed;
         }
 
         public IEnumerable<Job> Get((BigInteger start, BigInteger end) range)
