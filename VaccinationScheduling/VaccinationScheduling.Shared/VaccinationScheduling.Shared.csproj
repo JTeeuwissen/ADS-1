@@ -8,5 +8,8 @@
 		<TargetFramework>net5.0</TargetFramework>
 		<Nullable>enable</Nullable>
 	</PropertyGroup>
+	<ItemGroup>
+	  <PackageReference Include="Google.OrTools" Version="9.0.9048" />
+	</ItemGroup>
 
 </Project>
