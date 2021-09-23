@@ -1,7 +1,6 @@
 ﻿using System;
 using System.IO;
 using System.Numerics;
-using System.Security.Cryptography;
 
 namespace VaccinationScheduling.Generator
 {
@@ -17,20 +16,20 @@ namespace VaccinationScheduling.Generator
 
         // Patient
         private static BigInteger _nrPatients = 20;
-        private static int _maxExtraGapBytes = 3;
+        private static BigInteger _maxExtraGap = 3;
 
         // Intervals
         // First BigInteger range
-        private static int _minFirstIntervalStartBytes = 0;
-        private static int _maxFirstIntervalStartBytes = 60;
+        private static BigInteger _minFirstIntervalStart = 0;
+        private static BigInteger _maxFirstIntervalStart = 60;
 
         // First interval length
-        private static int _minFirstIntervalLengthBytes = 3;
-        private static int _maxFirstIntervalLengthBytes = 7;
+        private static BigInteger _minFirstIntervalLength = 3;
+        private static BigInteger _maxFirstIntervalLength = 7;
 
         // Second interval length
-        private static int _minSecondIntervalLengthBytes = 4;
-        private static int _maxSecondIntervalLengthBytes = 6;
+        private static BigInteger _minSecondIntervalLength = 4;
+        private static BigInteger _maxSecondIntervalLength = 6;
 
         /// <summary>
         /// Entrypoint of the program, generates an input file given the settings in this class
@@ -40,10 +39,10 @@ namespace VaccinationScheduling.Generator
             LoadSettings();
 
 
-            string? filePath = RequestString("Path (Console)");
+            string? filePath = RequestString("Path (Console)")?.Trim('"');
 
             // Write the file with the given settings
-            using TextWriter outputFile = filePath is { } ? new StreamWriter(filePath.Trim('"'), false) : Console.Out;
+            using TextWriter outputFile = filePath is { } ? new StreamWriter(filePath, false) : Console.Out;
             PrintSettings(outputFile);
             PrintPatients(outputFile);
         }
@@ -72,15 +71,19 @@ namespace VaccinationScheduling.Generator
             // Write line with random numbers to the file
             for (int i = 0; i < _nrPatients; i++)
             {
-                BigInteger firstIntervalStart =
-                    RandomBigInteger(random.Next(_minFirstIntervalStartBytes, _maxFirstIntervalStartBytes));
-                BigInteger firstIntervalEnd = firstIntervalStart + RandomBigInteger(
-                    random.Next(_minFirstIntervalLengthBytes, _maxFirstIntervalLengthBytes)
-                );
-                BigInteger patientGap = RandomBigInteger(random.Next(_maxExtraGapBytes));
-                BigInteger secondIntervalLength = RandomBigInteger(
-                    random.Next(_minSecondIntervalLengthBytes, _maxSecondIntervalLengthBytes)
-                );
+                BigInteger firstIntervalStart = (random.NextBigInteger(
+                    _minFirstIntervalStart,
+                    _maxFirstIntervalStart
+                ));
+                BigInteger firstIntervalEnd = firstIntervalStart + (random.NextBigInteger(
+                    _minFirstIntervalLength,
+                    _maxFirstIntervalLength
+                ));
+                BigInteger patientGap = (random.NextBigInteger(0, _maxExtraGap));
+                BigInteger secondIntervalLength = (random.NextBigInteger(
+                    _minSecondIntervalLength,
+                    _maxSecondIntervalLength
+                ));
 
                 writer.WriteLine($"{firstIntervalStart}, {firstIntervalEnd}, {patientGap}, {secondIntervalLength}");
             }
@@ -130,16 +133,16 @@ namespace VaccinationScheduling.Generator
                 _defaultGap = defaultGap;
             }
 
-            if (RequestInt($"{nameof(_maxExtraGapBytes)} ({_maxExtraGapBytes})") is { } maxExtraGapBytes)
+            if (RequestBigInteger($"{nameof(_maxExtraGap)} ({_maxExtraGap})") is { } maxExtraGapBytes)
             {
                 // Check fixed values
                 if (maxExtraGapBytes < 0)
                     throw new ArgumentException("Cannot have negative gaps");
 
-                _maxExtraGapBytes = maxExtraGapBytes;
+                _maxExtraGap = maxExtraGapBytes;
             }
 
-            if (RequestInt($"{nameof(_minFirstIntervalStartBytes)} ({_minFirstIntervalStartBytes})") is
+            if (RequestBigInteger($"{nameof(_minFirstIntervalStart)} ({_minFirstIntervalStart})") is
             {
             } minFirstIntervalStartBytes)
             {
@@ -147,21 +150,21 @@ namespace VaccinationScheduling.Generator
                 if (minFirstIntervalStartBytes < 0)
                     throw new ArgumentException("First interval start is wrong");
 
-                _minFirstIntervalStartBytes = minFirstIntervalStartBytes;
+                _minFirstIntervalStart = minFirstIntervalStartBytes;
             }
 
-            if (RequestInt($"{nameof(_maxFirstIntervalStartBytes)} ({_maxFirstIntervalStartBytes})") is
+            if (RequestBigInteger($"{nameof(_maxFirstIntervalStart)} ({_maxFirstIntervalStart})") is
             {
             } maxFirstIntervalStartBytes)
             {
                 // Check fixed values
-                if (_minFirstIntervalStartBytes > maxFirstIntervalStartBytes)
+                if (_minFirstIntervalStart > maxFirstIntervalStartBytes)
                     throw new ArgumentException("First interval start is wrong");
 
-                _maxFirstIntervalStartBytes = maxFirstIntervalStartBytes;
+                _maxFirstIntervalStart = maxFirstIntervalStartBytes;
             }
 
-            if (RequestInt($"{nameof(_minFirstIntervalLengthBytes)} ({_minFirstIntervalLengthBytes})") is
+            if (RequestBigInteger($"{nameof(_minFirstIntervalLength)} ({_minFirstIntervalLength})") is
             {
             } minFirstIntervalLengthBytes)
             {
@@ -169,45 +172,45 @@ namespace VaccinationScheduling.Generator
                 if (minFirstIntervalLengthBytes < 0)
                     throw new ArgumentException("First interval length variables are wrong");
 
-                _minFirstIntervalLengthBytes = minFirstIntervalLengthBytes;
+                _minFirstIntervalLength = minFirstIntervalLengthBytes;
             }
 
-            if (RequestInt($"{nameof(_maxFirstIntervalLengthBytes)} ({_maxFirstIntervalLengthBytes})") is
+            if (RequestBigInteger($"{nameof(_maxFirstIntervalLength)} ({_maxFirstIntervalLength})") is
             {
             } maxFirstIntervalLengthBytes)
             {
                 // Check fixed values
-                if (_minFirstIntervalLengthBytes > _maxFirstIntervalLengthBytes)
+                if (_minFirstIntervalLength > _maxFirstIntervalLength)
                     throw new ArgumentException("First interval length variables are wrong");
 
-                _maxFirstIntervalLengthBytes = maxFirstIntervalLengthBytes;
+                _maxFirstIntervalLength = maxFirstIntervalLengthBytes;
             }
 
-            if (RequestInt($"{nameof(_minSecondIntervalLengthBytes)} ({_minSecondIntervalLengthBytes})") is
+            if (RequestBigInteger($"{nameof(_minSecondIntervalLength)} ({_minSecondIntervalLength})") is
             {
             } minSecondIntervalLengthBytes)
             {
                 // Check fixed values
-                if (_minSecondIntervalLengthBytes < 0)
+                if (_minSecondIntervalLength < 0)
                     throw new ArgumentException("First interval length variables are wrong");
 
-                _minSecondIntervalLengthBytes = minSecondIntervalLengthBytes;
+                _minSecondIntervalLength = minSecondIntervalLengthBytes;
             }
 
 
-            if (RequestInt($"{nameof(_maxSecondIntervalLengthBytes)} ({_maxSecondIntervalLengthBytes})") is
+            if (RequestBigInteger($"{nameof(_maxSecondIntervalLength)} ({_maxSecondIntervalLength})") is
             {
             } maxSecondIntervalLengthBytes)
             {
                 // Check fixed values
-                if (_minSecondIntervalLengthBytes > _maxSecondIntervalLengthBytes)
+                if (_minSecondIntervalLength > _maxSecondIntervalLength)
                     throw new ArgumentException("Second interval length variables are wrong");
 
-                _maxSecondIntervalLengthBytes = maxSecondIntervalLengthBytes;
+                _maxSecondIntervalLength = maxSecondIntervalLengthBytes;
             }
 
             // Compare dose length with patient range
-            if (_firstDoseLength > _minFirstIntervalLengthBytes || _secondDoseLength > _minSecondIntervalLengthBytes)
+            if (_firstDoseLength > _minFirstIntervalLength || _secondDoseLength > _minSecondIntervalLength)
             {
                 throw new ArgumentException("Dose must have enough time sechduled to be valid");
             }
@@ -226,26 +229,10 @@ namespace VaccinationScheduling.Generator
             return responseMaybe is { } response ? bool.Parse(response) : null;
         }
 
-        private static int? RequestInt(string request)
-        {
-            string? responseMaybe = RequestString(request);
-            return responseMaybe is { } response ? int.Parse(response) : null;
-        }
-
         private static BigInteger? RequestBigInteger(string request)
         {
             string? responseMaybe = RequestString(request);
             return responseMaybe is { } response ? BigInteger.Parse(response) : null;
-        }
-
-
-        private static readonly RNGCryptoServiceProvider Rng = new();
-
-        private static BigInteger RandomBigInteger(int n = 10)
-        {
-            byte[] bytes = new byte[n];
-            Rng.GetBytes(bytes);
-            return BigInteger.Abs(new BigInteger(bytes));
         }
     }
 }
