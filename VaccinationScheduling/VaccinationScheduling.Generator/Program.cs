@@ -133,80 +133,80 @@ namespace VaccinationScheduling.Generator
                 _defaultGap = defaultGap;
             }
 
-            if (RequestBigInteger($"{nameof(_maxExtraGap)} ({_maxExtraGap})") is { } maxExtraGapBytes)
+            if (RequestBigInteger($"{nameof(_maxExtraGap)} ({_maxExtraGap})") is { } maxExtraGap)
             {
                 // Check fixed values
-                if (maxExtraGapBytes < 0)
+                if (maxExtraGap < 0)
                     throw new ArgumentException("Cannot have negative gaps");
 
-                _maxExtraGap = maxExtraGapBytes;
+                _maxExtraGap = maxExtraGap;
             }
 
             if (RequestBigInteger($"{nameof(_minFirstIntervalStart)} ({_minFirstIntervalStart})") is
             {
-            } minFirstIntervalStartBytes)
+            } minFirstIntervalStart)
             {
                 // Check fixed values
-                if (minFirstIntervalStartBytes < 0)
+                if (minFirstIntervalStart < 0)
                     throw new ArgumentException("First interval start is wrong");
 
-                _minFirstIntervalStart = minFirstIntervalStartBytes;
+                _minFirstIntervalStart = minFirstIntervalStart;
             }
 
             if (RequestBigInteger($"{nameof(_maxFirstIntervalStart)} ({_maxFirstIntervalStart})") is
             {
-            } maxFirstIntervalStartBytes)
+            } maxFirstIntervalStart)
             {
                 // Check fixed values
-                if (_minFirstIntervalStart > maxFirstIntervalStartBytes)
+                if (_minFirstIntervalStart > maxFirstIntervalStart)
                     throw new ArgumentException("First interval start is wrong");
 
-                _maxFirstIntervalStart = maxFirstIntervalStartBytes;
+                _maxFirstIntervalStart = maxFirstIntervalStart;
             }
 
             if (RequestBigInteger($"{nameof(_minFirstIntervalLength)} ({_minFirstIntervalLength})") is
             {
-            } minFirstIntervalLengthBytes)
+            } minFirstIntervalLength)
             {
                 // Check fixed values
-                if (minFirstIntervalLengthBytes < 0)
+                if (minFirstIntervalLength < 0)
                     throw new ArgumentException("First interval length variables are wrong");
 
-                _minFirstIntervalLength = minFirstIntervalLengthBytes;
+                _minFirstIntervalLength = minFirstIntervalLength;
             }
 
             if (RequestBigInteger($"{nameof(_maxFirstIntervalLength)} ({_maxFirstIntervalLength})") is
             {
-            } maxFirstIntervalLengthBytes)
+            } maxFirstIntervalLength)
             {
                 // Check fixed values
-                if (_minFirstIntervalLength > _maxFirstIntervalLength)
+                if (_minFirstIntervalLength > maxFirstIntervalLength)
                     throw new ArgumentException("First interval length variables are wrong");
 
-                _maxFirstIntervalLength = maxFirstIntervalLengthBytes;
+                _maxFirstIntervalLength = maxFirstIntervalLength;
             }
 
             if (RequestBigInteger($"{nameof(_minSecondIntervalLength)} ({_minSecondIntervalLength})") is
             {
-            } minSecondIntervalLengthBytes)
+            } minSecondIntervalLength)
             {
                 // Check fixed values
                 if (_minSecondIntervalLength < 0)
                     throw new ArgumentException("First interval length variables are wrong");
 
-                _minSecondIntervalLength = minSecondIntervalLengthBytes;
+                _minSecondIntervalLength = minSecondIntervalLength;
             }
 
 
             if (RequestBigInteger($"{nameof(_maxSecondIntervalLength)} ({_maxSecondIntervalLength})") is
             {
-            } maxSecondIntervalLengthBytes)
+            } maxSecondIntervalLength)
             {
                 // Check fixed values
-                if (_minSecondIntervalLength > _maxSecondIntervalLength)
+                if (_minSecondIntervalLength > maxSecondIntervalLength)
                     throw new ArgumentException("Second interval length variables are wrong");
 
-                _maxSecondIntervalLength = maxSecondIntervalLengthBytes;
+                _maxSecondIntervalLength = maxSecondIntervalLength;
             }
 
             // Compare dose length with patient range
