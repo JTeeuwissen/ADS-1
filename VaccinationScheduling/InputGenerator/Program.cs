@@ -1,7 +1,7 @@
 ﻿using System;
 using System.IO;
 
-namespace InputGenerator
+namespace VaccinationScheduling.Generator
 {
     class Program
     {
@@ -42,12 +42,13 @@ namespace InputGenerator
             string fileName = DateTime.Now.ToString("MM-dd-yy_H-mm-ss");
             string dirName = online ? "Online" : "Offline";
 
+
+            Console.WriteLine("Path:");
+            string filePath = Console.ReadLine();
             // Write the file with the given settings
-            using (StreamWriter outputFile = new StreamWriter($"../../../../VaccinationScheduling.Tests/Input/{dirName}/{fileName}", true))
-            {
-                PrintSettings(outputFile);
-                PrintPatients(outputFile);
-            }
+            using StreamWriter outputFile = new(filePath, true);
+            PrintSettings(outputFile);
+            PrintPatients(outputFile);
         }
 
         /// <summary>

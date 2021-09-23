@@ -9,8 +9,9 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "VaccinationScheduling.Offli
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "VaccinationScheduling.Shared", "VaccinationScheduling.Shared\VaccinationScheduling.Shared.csproj", "{CC94AE8A-C621-48F2-B189-48C10EF9BC03}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "InputGenerator", "InputGenerator\InputGenerator.csproj", "{6710BA83-7FD9-434A-BC80-EBEF7A506727}"
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "VaccinationScheduling.Tests", "VaccinationScheduling.Tests\VaccinationScheduling.Tests.csproj", "{4ECE1DE0-3419-41F7-9B5A-395B13955A1C}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "VaccinationScheduling.Generator", "InputGenerator\VaccinationScheduling.Generator.csproj", "{6710BA83-7FD9-434A-BC80-EBEF7A506727}"
+EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "VaccinationScheduling.Tests", "VaccinationScheduling.Tests\VaccinationScheduling.Tests.csproj", "{4ECE1DE0-3419-41F7-9B5A-395B13955A1C}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
