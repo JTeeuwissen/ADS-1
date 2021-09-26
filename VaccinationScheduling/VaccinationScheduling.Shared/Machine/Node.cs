@@ -10,15 +10,15 @@
 
 using System.Diagnostics;
 
-namespace VaccinationScheduling.Shared.RedBlackTree
+namespace VaccinationScheduling.Shared.Machine
 {
     /// <summary>
     /// The class that is each node in the red-black tree.
     /// </summary>
-    public class Node<T>
+    public class Node
     {
-        public Node<T> left, right;
-        public T item;
+        public Node left, right;
+        public Range item;
 
         private const uint REDMASK = 0x80000000;
         private uint count;
@@ -71,9 +71,9 @@ namespace VaccinationScheduling.Shared.RedBlackTree
         /// Clones a node and all its descendants.
         /// </summary>
         /// <returns>The cloned node.</returns>
-        public Node<T> Clone()
+        public Node Clone()
         {
-            Node<T> newNode = new Node<T>();
+            Node newNode = new Node();
             newNode.item = item;
 
             newNode.count = count;

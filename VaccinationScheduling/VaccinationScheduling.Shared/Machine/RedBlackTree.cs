@@ -12,7 +12,7 @@ using System;
 using System.Diagnostics;
 using System.Collections.Generic;
 
-namespace VaccinationScheduling.Shared.RedBlackTree
+namespace VaccinationScheduling.Shared.Machine
 {
     /// <summary>
     /// The base implementation for various collections classes that use Red-Black trees
@@ -25,17 +25,16 @@ namespace VaccinationScheduling.Shared.RedBlackTree
     /// in the tree. Insert, Delete, and Find operations are provided in their full generality;
     /// all operations allow dealing with either the first or last of items that compare equal.
     ///</remarks>
-    public class RedBlackTree<T> : IEnumerable<T>
+    public partial class RedBlackTree : IEnumerable<Range>
     {
-        private readonly IComparer<T> comparer;      // interface for comparing elements, only Compare is used.
-        private Node<T> root;                      // The root of the tree. Can be null when tree is empty.
+        private Node root = null;                      // The root of the tree. Can be null when tree is empty.
         private int count;            // The count of elements in the tree.
 
         private int changeStamp;        // An integer that is changed every time the tree structurally changes.
                                         // Used so that enumerations throw an exception if the tree is changed
                                         // during enumeration.
 
-        private Node<T>[] stack;               // A stack of nodes. This is cached locally to avoid constant re-allocated it.
+        private Node[] stack;               // A stack of nodes. This is cached locally to avoid constant re-allocated it.
 
         /// <summary>
         /// Create an array of Nodes big enough for any path from top
@@ -43,7 +42,7 @@ namespace VaccinationScheduling.Shared.RedBlackTree
         /// can be around at a time per tree.
         /// </summary>
         /// <returns>The node stack.</returns>
-        private Node<T>[] GetNodeStack()
+        private Node[] GetNodeStack()
         {
             // Maximum depth needed is 2 * lg count + 1.
             int maxDepth;
@@ -55,7 +54,7 @@ namespace VaccinationScheduling.Shared.RedBlackTree
                 maxDepth = 65;
 
             if (stack == null || stack.Length < maxDepth)
-                stack = new Node<T>[maxDepth];
+                stack = new Node[maxDepth];
 
             return stack;
         }
@@ -89,11 +88,13 @@ namespace VaccinationScheduling.Shared.RedBlackTree
         /// Compare is used on the IComparer interface.
         /// </summary>
         /// <param name="comparer">The IComparer&lt;T&gt; used to sort keys.</param>
-        public RedBlackTree(IComparer<T> comparer)
+        public RedBlackTree(int jobLength)
         {
-            this.comparer = comparer;
+            this.JobLength = jobLength;
+            Debug.Assert(jobLength > 0);
             this.count = 0;
-            this.root = null;
+            // Each tree starts with 'infinite range'
+            Insert(new Range(0, -1));
         }
 
         /// <summary>
@@ -112,9 +113,9 @@ namespace VaccinationScheduling.Shared.RedBlackTree
         /// take O(N) take.
         /// </summary>
         /// <returns>Clone version of this tree.</returns>
-        public RedBlackTree<T> Clone()
+        public RedBlackTree Clone()
         {
-            RedBlackTree<T> newTree = new RedBlackTree<T>(comparer);
+            RedBlackTree newTree = new RedBlackTree(JobLength);
             newTree.count = this.count;
             if (this.root != null)
                 newTree.root = this.root.Clone();
@@ -131,14 +132,14 @@ namespace VaccinationScheduling.Shared.RedBlackTree
         /// <param name="replace">If true, replaces the item with key (if function returns true)</param>
         /// <param name="item">Returns the found item, before replacing (if function returns true).</param>
         /// <returns>True if the key was found.</returns>
-        public bool Find(T key, bool findFirst, bool replace, out T item)
+        public bool Find(Range key, bool findFirst, bool replace, out Range item)
         {
-            Node<T> current = root;      // current search location in the tree
-            Node<T> found = null;      // last node found with the key, or null if none.
+            Node current = root;      // current search location in the tree
+            Node found = null;      // last node found with the key, or null if none.
 
             while (current != null)
             {
-                int compare = comparer.Compare(key, current.item);
+                int compare = key.CompareTo(current.item);
 
                 if (compare < 0)
                 {
@@ -169,7 +170,7 @@ namespace VaccinationScheduling.Shared.RedBlackTree
             }
             else
             {
-                item = default(T);
+                item = default(Range);
                 return false;
             }
         }
@@ -181,9 +182,9 @@ namespace VaccinationScheduling.Shared.RedBlackTree
         /// <param name="key">Key to search for.</param>
         /// <param name="findFirst">If true, find the first of duplicates, else finds the last of duplicates.</param>
         /// <returns>Index of the item found if the key was found, -1 if not found.</returns>
-        public int FindIndex(T key, bool findFirst)
+        public int FindIndex(Range key, bool findFirst)
         {
-            T dummy;
+            Range dummy;
             if (findFirst)
                 return FirstItemInRange(EqualRangeTester(key), out dummy);
             else
@@ -195,12 +196,12 @@ namespace VaccinationScheduling.Shared.RedBlackTree
         /// </summary>
         /// <param name="index">The zero-based index of the item. Must be &gt;= 0 and &lt; Count.</param>
         /// <returns>The item at the particular index.</returns>
-        public T GetItemByIndex(int index)
+        public Range GetItemByIndex(int index)
         {
             if (index < 0 || index >= count)
                 throw new ArgumentOutOfRangeException("index");
 
-            Node<T> current = root;      // current search location in the tree
+            Node current = root;      // current search location in the tree
 
             for (; ; )
             {
@@ -228,16 +229,15 @@ namespace VaccinationScheduling.Shared.RedBlackTree
         /// </summary>
         /// <remarks>Algorithm from Sedgewick, "Algorithms".</remarks>
         /// <param name="item">The new item to insert</param>
-        /// <param name="dupPolicy">What to do if equal item is already present.</param>
         /// <param name="previous">If false, returned, the previous item.</param>
         /// <returns>false if duplicate exists, otherwise true.</returns>
-        public bool Insert(T item, DuplicatePolicy dupPolicy, out T previous)
+        public bool Insert(Range item, out Range previous)
         {
-            Node<T> node = root;
-            Node<T> parent = null, gparent = null, ggparent = null;  // parent, grand, a great-grantparent of node.
+            Node node = root;
+            Node parent = null, gparent = null, ggparent = null;  // parent, grand, a great-grantparent of node.
             bool wentLeft = false, wentRight = false;        // direction from parent to node.
             bool rotated;
-            Node<T> duplicateFound = null;
+            Node duplicateFound = null;
 
             // The tree may be changed.
             StopEnumerations();
@@ -245,8 +245,8 @@ namespace VaccinationScheduling.Shared.RedBlackTree
             // We increment counts on the way down the tree. If we end up not inserting an items due
             // to a duplicate, we need a stack to adjust the counts back. We don't need the stack if the duplicate
             // policy means that we will always do an insertion.
-            bool needStack = !((dupPolicy == DuplicatePolicy.InsertFirst) || (dupPolicy == DuplicatePolicy.InsertLast));
-            Node<T>[] nodeStack = null;
+            bool needStack = true;
+            Node[] nodeStack = null;
             int nodeStackPtr = 0;  // first free item on the stack.
             if (needStack)
                 nodeStack = GetNodeStack();
@@ -271,34 +271,17 @@ namespace VaccinationScheduling.Shared.RedBlackTree
                 ggparent = gparent; gparent = parent; parent = node;
 
                 // Compare the key and the node.
-                int compare = comparer.Compare(item, node.item);
+                int compare = item.CompareTo(node.item);
 
                 if (compare == 0)
                 {
-                    // Found a node with the data already. Check duplicate policy.
-                    if (dupPolicy == DuplicatePolicy.DoNothing)
-                    {
-                        previous = node.item;
+                    previous = node.item;
 
-                        // Didn't insert after all. Return counts back to their previous value.
-                        for (int i = 0; i < nodeStackPtr; ++i)
-                            nodeStack[i].DecrementCount();
+                    // Didn't insert after all. Return counts back to their previous value.
+                    for (int i = 0; i < nodeStackPtr; ++i)
+                        nodeStack[i].DecrementCount();
 
-                        return false;
-                    }
-                    else if (dupPolicy == DuplicatePolicy.InsertFirst || dupPolicy == DuplicatePolicy.ReplaceFirst)
-                    {
-                        // Insert first by treating the key as less than nodes in the tree.
-                        duplicateFound = node;
-                        compare = -1;
-                    }
-                    else
-                    {
-                        Debug.Assert(dupPolicy == DuplicatePolicy.InsertLast || dupPolicy == DuplicatePolicy.ReplaceLast);
-                        // Insert last by treating the key as greater than nodes in the tree.
-                        duplicateFound = node;
-                        compare = 1;
-                    }
+                    return false;
                 }
 
                 Debug.Assert(compare != 0);
@@ -323,26 +306,14 @@ namespace VaccinationScheduling.Shared.RedBlackTree
             if (duplicateFound != null)
             {
                 previous = duplicateFound.item;
-
-                // Are we replacing instread of inserting?
-                if (dupPolicy == DuplicatePolicy.ReplaceFirst || dupPolicy == DuplicatePolicy.ReplaceLast)
-                {
-                    duplicateFound.item = item;
-
-                    // Didn't insert after all. Return counts back to their previous value.
-                    for (int i = 0; i < nodeStackPtr; ++i)
-                        nodeStack[i].DecrementCount();
-
-                    return false;
-                }
             }
             else
             {
-                previous = default(T);
+                previous = default(Range);
             }
 
             // Create a new node.
-            node = new Node<T>();
+            node = new Node();
             node.item = item;
             node.Count = 1;
 
@@ -376,7 +347,7 @@ namespace VaccinationScheduling.Shared.RedBlackTree
         /// <param name="node">Node to split, can't be null</param>
         /// <param name="rotated">Indicates that rotation(s) occurred in the tree.</param>
         /// <returns>Node to continue searching from.</returns>
-        private Node<T> InsertSplit(Node<T> ggparent, Node<T> gparent, Node<T> parent, Node<T> node, out bool rotated)
+        private Node InsertSplit(Node ggparent, Node gparent, Node parent, Node node, out bool rotated)
         {
             if (node != root)
                 node.IsRed = true;
@@ -423,7 +394,7 @@ namespace VaccinationScheduling.Shared.RedBlackTree
         /// <param name="node">Top node of the rotation. Can be null if child==root.</param>
         /// <param name="child">One child of "node". Not null.</param>
         /// <param name="gchild">One child of "child". Not null.</param>
-        private void Rotate(Node<T> node, Node<T> child, Node<T> gchild)
+        private void Rotate(Node node, Node child, Node gchild)
         {
             if (gchild == child.left)
             {
@@ -470,7 +441,7 @@ namespace VaccinationScheduling.Shared.RedBlackTree
         /// <param name="item">Returns the item that was deleted, if true returned.</param>
         /// <returns>True if an element was deleted, false if no element had
         /// specified key.</returns>
-        public bool Delete(T key, bool deleteFirst, out T item)
+        public bool Delete(Range key, bool deleteFirst, out Range item)
         {
             return DeleteItemFromRange(EqualRangeTester(key), deleteFirst, out item);
         }
@@ -481,7 +452,7 @@ namespace VaccinationScheduling.Shared.RedBlackTree
         /// </summary>
         /// <returns>An enumerator for all the items, in order.</returns>
         /// <exception cref="InvalidOperationException">The tree has an item added or deleted during the enumeration.</exception>
-        public IEnumerator<T> GetEnumerator()
+        public IEnumerator<Range> GetEnumerator()
         {
             return EnumerateRange(EntireRangeTester).GetEnumerator();
         }
@@ -506,7 +477,7 @@ namespace VaccinationScheduling.Shared.RedBlackTree
         /// <param name="item">Item to test against the range.</param>
         /// <returns>Returns negative if item is before the range, zero if item is withing the range,
         /// and positive if item is after the range.</returns>
-        public delegate int RangeTester(T item);
+        public delegate int RangeTester(Range item);
 
         /// <summary>
         /// Gets a range tester that defines a range by first and last items.
@@ -516,13 +487,13 @@ namespace VaccinationScheduling.Shared.RedBlackTree
         /// <param name="useLast">If true, bound the range on the top by last.</param>
         /// <param name="last">If useLast is true, the exclusive upper bound.</param>
         /// <returns>A RangeTester delegate that tests for an item in the given range.</returns>
-        public RangeTester BoundedRangeTester(bool useFirst, T first, bool useLast, T last)
+        public RangeTester BoundedRangeTester(bool useFirst, Range first, bool useLast, Range last)
         {
-            return delegate (T item)
+            return delegate (Range item)
             {
-                if (useFirst && comparer.Compare(first, item) > 0)
+                if (useFirst && first.CompareTo(item) > 0)
                     return -1;     // item is before first.
-                else if (useLast && comparer.Compare(last, item) <= 0)
+                else if (useLast && last.CompareTo(item) <= 0)
                     return 1;      // item is after or equal to last.
                 else
                     return 0;      // item is greater or equal to first, and less than last.
@@ -537,29 +508,29 @@ namespace VaccinationScheduling.Shared.RedBlackTree
         /// <param name="last">The upper bound.</param>
         /// <param name="lastInclusive">True if the upper bound is inclusive, false if exclusive.</param>
         /// <returns>A RangeTester delegate that tests for an item in the given range.</returns>
-        public RangeTester DoubleBoundedRangeTester(T first, bool firstInclusive, T last, bool lastInclusive)
+        public RangeTester DoubleBoundedRangeTester(Range first, bool firstInclusive, Range last, bool lastInclusive)
         {
-            return delegate (T item)
+            return delegate (Range item)
             {
                 if (firstInclusive)
                 {
-                    if (comparer.Compare(first, item) > 0)
+                    if (first.CompareTo(item) > 0)
                         return -1;     // item is before first.
                 }
                 else
                 {
-                    if (comparer.Compare(first, item) >= 0)
+                    if (first.CompareTo(item) >= 0)
                         return -1;     // item is before or equal to first.
                 }
 
                 if (lastInclusive)
                 {
-                    if (comparer.Compare(last, item) < 0)
+                    if (last.CompareTo(item) < 0)
                         return 1;      // item is after last.
                 }
                 else
                 {
-                    if (comparer.Compare(last, item) <= 0)
+                    if (last.CompareTo(item) <= 0)
                         return 1;      // item is after or equal to last
                 }
 
@@ -574,20 +545,20 @@ namespace VaccinationScheduling.Shared.RedBlackTree
         /// <param name="first">The lower bound.</param>
         /// <param name="inclusive">True if the lower bound is inclusive, false if exclusive.</param>
         /// <returns>A RangeTester delegate that tests for an item in the given range.</returns>
-        public RangeTester LowerBoundedRangeTester(T first, bool inclusive)
+        public RangeTester LowerBoundedRangeTester(Range first, bool inclusive)
         {
-            return delegate (T item)
+            return delegate (Range item)
             {
                 if (inclusive)
                 {
-                    if (comparer.Compare(first, item) > 0)
+                    if (first.CompareTo(item) > 0)
                         return -1;     // item is before first.
                     else
                         return 0;      // item is after or equal to first
                 }
                 else
                 {
-                    if (comparer.Compare(first, item) >= 0)
+                    if (first.CompareTo(item) >= 0)
                         return -1;     // item is before or equal to first.
                     else
                         return 0;      // item is after first
@@ -602,20 +573,20 @@ namespace VaccinationScheduling.Shared.RedBlackTree
         /// <param name="last">The upper bound.</param>
         /// <param name="inclusive">True if the upper bound is inclusive, false if exclusive.</param>
         /// <returns>A RangeTester delegate that tests for an item in the given range.</returns>
-        public RangeTester UpperBoundedRangeTester(T last, bool inclusive)
+        public RangeTester UpperBoundedRangeTester(Range last, bool inclusive)
         {
-            return delegate (T item)
+            return delegate (Range item)
             {
                 if (inclusive)
                 {
-                    if (comparer.Compare(last, item) < 0)
+                    if (last.CompareTo(item) < 0)
                         return 1;      // item is after last.
                     else
                         return 0;      // item is before or equal to last.
                 }
                 else
                 {
-                    if (comparer.Compare(last, item) <= 0)
+                    if (last.CompareTo(item) <= 0)
                         return 1;      // item is after or equal to last
                     else
                         return 0;      // item is before last.
@@ -628,11 +599,11 @@ namespace VaccinationScheduling.Shared.RedBlackTree
         /// </summary>
         /// <param name="equalTo">The item that is contained in the range.</param>
         /// <returns>A RangeTester delegate that tests for an item equal to <paramref name="equalTo"/>.</returns>
-        public RangeTester EqualRangeTester(T equalTo)
+        public RangeTester EqualRangeTester(Range equalTo)
         {
-            return delegate (T item)
+            return delegate (Range item)
             {
-                return comparer.Compare(item, equalTo);
+                return item.CompareTo(equalTo);
             };
         }
 
@@ -641,7 +612,7 @@ namespace VaccinationScheduling.Shared.RedBlackTree
         /// </summary>
         /// <param name="item">Item to test.</param>
         /// <returns>Always returns 0.</returns>
-        public int EntireRangeTester(T item)
+        public int EntireRangeTester(Range item)
         {
             return 0;
         }
@@ -653,7 +624,7 @@ namespace VaccinationScheduling.Shared.RedBlackTree
         /// <param name="rangeTester">Tests an item against the custom range.</param>
         /// <returns>An IEnumerable&lt;T&gt; that enumerates the custom range in order.</returns>
         /// <exception cref="InvalidOperationException">The tree has an item added or deleted during the enumeration.</exception>
-        public IEnumerable<T> EnumerateRange(RangeTester rangeTester)
+        public IEnumerable<Range> EnumerateRange(RangeTester rangeTester)
         {
             return EnumerateRangeInOrder(rangeTester, root);
         }
@@ -665,7 +636,7 @@ namespace VaccinationScheduling.Shared.RedBlackTree
         /// <param name="node">Node to begin enumeration. May be null.</param>
         /// <returns>An enumerable of the items.</returns>
         /// <exception cref="InvalidOperationException">The tree has an item added or deleted during the enumeration.</exception>
-        private IEnumerable<T> EnumerateRangeInOrder(RangeTester rangeTester, Node<T> node)
+        private IEnumerable<Range> EnumerateRangeInOrder(RangeTester rangeTester, Node node)
         {
             int startStamp = changeStamp;
 
@@ -676,7 +647,7 @@ namespace VaccinationScheduling.Shared.RedBlackTree
                 if (compare >= 0)
                 {
                     // At least part of the range may lie to the left.
-                    foreach (T item in EnumerateRangeInOrder(rangeTester, node.left))
+                    foreach (Range item in EnumerateRangeInOrder(rangeTester, node.left))
                     {
                         yield return item;
                         CheckEnumerationStamp(startStamp);
@@ -693,7 +664,7 @@ namespace VaccinationScheduling.Shared.RedBlackTree
                 if (compare <= 0)
                 {
                     // At least part of the range lies to the right.
-                    foreach (T item in EnumerateRangeInOrder(rangeTester, node.right))
+                    foreach (Range item in EnumerateRangeInOrder(rangeTester, node.right))
                     {
                         yield return item;
                         CheckEnumerationStamp(startStamp);
@@ -709,7 +680,7 @@ namespace VaccinationScheduling.Shared.RedBlackTree
         /// <param name="rangeTester">Tests an item against the custom range.</param>
         /// <returns>An IEnumerable&lt;T&gt; that enumerates the custom range in reversed order.</returns>
         /// <exception cref="InvalidOperationException">The tree has an item added or deleted during the enumeration.</exception>
-        public IEnumerable<T> EnumerateRangeReversed(RangeTester rangeTester)
+        public IEnumerable<Range> EnumerateRangeReversed(RangeTester rangeTester)
         {
             return EnumerateRangeInReversedOrder(rangeTester, root);
         }
@@ -721,7 +692,7 @@ namespace VaccinationScheduling.Shared.RedBlackTree
         /// <param name="node">Node to begin enumeration. May be null.</param>
         /// <returns>An enumerable of the items, in reversed oreder.</returns>
         /// <exception cref="InvalidOperationException">The tree has an item added or deleted during the enumeration.</exception>
-        private IEnumerable<T> EnumerateRangeInReversedOrder(RangeTester rangeTester, Node<T> node)
+        private IEnumerable<Range> EnumerateRangeInReversedOrder(RangeTester rangeTester, Node node)
         {
             int startStamp = changeStamp;
 
@@ -732,7 +703,7 @@ namespace VaccinationScheduling.Shared.RedBlackTree
                 if (compare <= 0)
                 {
                     // At least part of the range lies to the right.
-                    foreach (T item in EnumerateRangeInReversedOrder(rangeTester, node.right))
+                    foreach (Range item in EnumerateRangeInReversedOrder(rangeTester, node.right))
                     {
                         yield return item;
                         CheckEnumerationStamp(startStamp);
@@ -749,7 +720,7 @@ namespace VaccinationScheduling.Shared.RedBlackTree
                 if (compare >= 0)
                 {
                     // At least part of the range may lie to the left.
-                    foreach (T item in EnumerateRangeInReversedOrder(rangeTester, node.left))
+                    foreach (Range item in EnumerateRangeInReversedOrder(rangeTester, node.left))
                     {
                         yield return item;
                         CheckEnumerationStamp(startStamp);
@@ -770,13 +741,13 @@ namespace VaccinationScheduling.Shared.RedBlackTree
         /// <param name="deleteFirst">If true, delete the first item from the range, else the last.</param>
         /// <param name="item">Returns the item that was deleted, if true returned.</param>
         /// <returns>True if an element was deleted, false if the range is empty.</returns>
-        public bool DeleteItemFromRange(RangeTester rangeTester, bool deleteFirst, out T item)
+        public bool DeleteItemFromRange(RangeTester rangeTester, bool deleteFirst, out Range item)
         {
-            Node<T> node;      // The current node.
-            Node<T> parent;    // Parent of the current node.
-            Node<T> gparent;    // Grandparent of the current node.
-            Node<T> sib;      // Sibling of the current node.
-            Node<T> keyNode;    // Node with the key that is being removed.
+            Node node;      // The current node.
+            Node parent;    // Parent of the current node.
+            Node gparent;    // Grandparent of the current node.
+            Node sib;      // Sibling of the current node.
+            Node keyNode;    // Node with the key that is being removed.
 
             // The tree may be changed.
             StopEnumerations();
@@ -784,13 +755,13 @@ namespace VaccinationScheduling.Shared.RedBlackTree
             if (root == null)
             {
                 // Nothing in the tree. Go home now.
-                item = default(T);
+                item = default(Range);
                 return false;
             }
 
             // We decrement counts on the way down the tree. If we end up not finding an item to delete
             // we need a stack to adjust the counts back.
-            Node<T>[] nodeStack = GetNodeStack();
+            Node[] nodeStack = GetNodeStack();
             int nodeStackPtr = 0;  // first free item on the stack.
 
             // Start at the root.
@@ -826,14 +797,14 @@ namespace VaccinationScheduling.Shared.RedBlackTree
                         if (parent.left == node && (sib.right == null || !sib.right.IsRed))
                         {
                             // sib has a black child on the opposite side as node.
-                            Node<T> tleft = sib.left;
+                            Node tleft = sib.left;
                             Rotate(parent, sib, tleft);
                             sib = tleft;
                         }
                         else if (parent.right == node && (sib.left == null || !sib.left.IsRed))
                         {
                             // sib has a black child on the opposite side as node.
-                            Node<T> tright = sib.right;
+                            Node tright = sib.right;
                             Rotate(parent, sib, tright);
                             sib = tright;
                         }
@@ -855,7 +826,7 @@ namespace VaccinationScheduling.Shared.RedBlackTree
                 // Compare the key and move down the tree to the correct child.
                 do
                 {
-                    Node<T> nextNode, nextSib;    // Node we've moving to, and it's sibling.
+                    Node nextNode, nextSib;    // Node we've moving to, and it's sibling.
 
                     node.DecrementCount();
                     nodeStack[nodeStackPtr++] = node;
@@ -930,7 +901,7 @@ namespace VaccinationScheduling.Shared.RedBlackTree
                 if (root != null)
                     root.IsRed = false;
 
-                item = default(T);
+                item = default(Range);
                 return false;
             }
 
@@ -947,7 +918,7 @@ namespace VaccinationScheduling.Shared.RedBlackTree
 
             // If we have one child, replace the current with the child, otherwise,
             // replace the current node with null.
-            Node<T> replacement;
+            Node replacement;
             if (node.left != null)
             {
                 replacement = node.left;
@@ -996,7 +967,7 @@ namespace VaccinationScheduling.Shared.RedBlackTree
         {
             bool deleted;
             int counter = 0;
-            T dummy;
+            Range dummy;
 
             do
             {
@@ -1027,7 +998,7 @@ namespace VaccinationScheduling.Shared.RedBlackTree
         /// <param name="belowRangeTop">This node and all under it are either in the range or below it.</param>
         /// <param name="aboveRangeBottom">This node and all under it are either in the range or above it.</param>
         /// <returns>The number of items in the range, under and include node.</returns>
-        private int CountRangeUnderNode(RangeTester rangeTester, Node<T> node, bool belowRangeTop, bool aboveRangeBottom)
+        private int CountRangeUnderNode(RangeTester rangeTester, Node node, bool belowRangeTop, bool aboveRangeBottom)
         {
             if (node != null)
             {
@@ -1070,9 +1041,9 @@ namespace VaccinationScheduling.Shared.RedBlackTree
         /// <param name="rangeTester">The delegate that defines the range.</param>
         /// <param name="item">Returns the item found, if true was returned.</param>
         /// <returns>Index of first item in range if range is non-empty, -1 otherwise.</returns>
-        public int FirstItemInRange(RangeTester rangeTester, out T item)
+        public int FirstItemInRange(RangeTester rangeTester, out Range item)
         {
-            Node<T> node = root, found = null;
+            Node node = root, found = null;
             int curCount = 0, foundIndex = -1;
 
             while (node != null)
@@ -1107,7 +1078,7 @@ namespace VaccinationScheduling.Shared.RedBlackTree
             }
             else
             {
-                item = default(T);
+                item = default(Range);
                 return -1;
             }
         }
@@ -1119,9 +1090,9 @@ namespace VaccinationScheduling.Shared.RedBlackTree
         /// <param name="rangeTester">The delegate that defines the range.</param>
         /// <param name="item">Returns the item found, if true was returned.</param>
         /// <returns>Index of the item if range is non-empty, -1 otherwise.</returns>
-        public int LastItemInRange(RangeTester rangeTester, out T item)
+        public int LastItemInRange(RangeTester rangeTester, out Range item)
         {
-            Node<T> node = root, found = null;
+            Node node = root, found = null;
             int curCount = 0, foundIndex = -1;
 
             while (node != null)
@@ -1156,14 +1127,14 @@ namespace VaccinationScheduling.Shared.RedBlackTree
             }
             else
             {
-                item = default(T);
+                item = default(Range);
                 return foundIndex;
             }
         }
 
         #endregion Ranges
 
-        #if DEBUG
+#if DEBUG
         /// <summary>
         /// Prints out the tree.
         /// </summary>
@@ -1179,7 +1150,7 @@ namespace VaccinationScheduling.Shared.RedBlackTree
         /// <param name="node">Node to print from</param>
         /// <param name="prefixNode">Prefix for the node</param>
         /// <param name="prefixChildren">Prefix for the node's children</param>
-        private void PrintSubTree(Node<T> node, string prefixNode, string prefixChildren)
+        private void PrintSubTree(Node node, string prefixNode, string prefixChildren)
         {
             if (node == null)
                 return;
@@ -1197,7 +1168,7 @@ namespace VaccinationScheduling.Shared.RedBlackTree
         /// </summary>
         public void Validate()
         {
-            Debug.Assert(comparer != null, "Comparer should not be null");
+            //Debug.Assert(comparer != null, "Comparer should not be null");
 
             if (root == null)
             {
@@ -1219,7 +1190,7 @@ namespace VaccinationScheduling.Shared.RedBlackTree
         /// <param name="node">Sub-tree to validate. May be null.</param>
         /// <param name="blackHeight">Returns the black height of the tree.</param>
         /// <returns>Returns the number of nodes in the sub-tree. 0 if node is null.</returns>
-        private int ValidateSubTree(Node<T> node, out int blackHeight)
+        private int ValidateSubTree(Node node, out int blackHeight)
         {
             if (node == null)
             {
@@ -1229,9 +1200,9 @@ namespace VaccinationScheduling.Shared.RedBlackTree
 
             // Check that this node is sorted with respect to any children.
             if (node.left != null)
-                Debug.Assert(comparer.Compare(node.left.item, node.item) <= 0, "Left child is not less than or equal to node");
+                Debug.Assert(node.left.item.CompareTo(node.item) <= 0, "Left child is not less than or equal to node");
             if (node.right != null)
-                Debug.Assert(comparer.Compare(node.right.item, node.item) >= 0, "Right child is not greater than or equal to node");
+                Debug.Assert(node.right.item.CompareTo(node.item) >= 0, "Right child is not greater than or equal to node");
 
             // Check that the two-red rule is not violated.
             if (node.IsRed)
@@ -1262,6 +1233,6 @@ namespace VaccinationScheduling.Shared.RedBlackTree
                 blackHeight += 1;
             return ourCount;
         }
-        #endif //DEBUG
+#endif //DEBUG
     }
 }

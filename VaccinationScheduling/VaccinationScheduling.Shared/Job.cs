@@ -42,12 +42,12 @@ namespace VaccinationScheduling.Shared
         /// <param name="firstIntervalEnd">Last slot patient is available in for the first jab</param>
         /// <param name="secondIntervalLength">Second slot length patient is available at</param>
         /// <param name="extraDelay">The extra delay that the patient wants between the jabs</param>
-        public Job(Global global, int firstIntervalStart, int firstIntervalEnd, int secondIntervalLength, int extraDelay)
+        public Job(Global global, int firstIntervalStart, int firstIntervalEnd, int extraDelay, int secondIntervalLength)
         {
             MinFirstIntervalStart = firstIntervalStart;
             MaxFirstIntervalStart = firstIntervalEnd - global.TFirstDose + 1;
             MinGapIntervalStarts = global.TGap + extraDelay + global.TFirstDose;
-            MaxGapIntervalStarts = MinGapIntervalStarts + secondIntervalLength - global.TSecondDose - 1;
+            MaxGapIntervalStarts = MinGapIntervalStarts + secondIntervalLength - global.TSecondDose;
 
             // DO NOT USE THESE VARIABLES
             // Only for later verification of the answer
