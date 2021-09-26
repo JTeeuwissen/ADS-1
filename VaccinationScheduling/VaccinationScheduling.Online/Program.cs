@@ -9,6 +9,7 @@ namespace VaccinationScheduling.Online
     {
         private Global global;
         private JobEnumerable jobs;
+        bool debug = true;
 
         List<MachineSchedule> schedules = new List<MachineSchedule>();
 
@@ -29,7 +30,6 @@ namespace VaccinationScheduling.Online
                         continue;
                     }
 
-                    Console.WriteLine($"Found free spot on machine nr: {i}");
                     schedules[i].ScheduleJobs(freespot.Item1, freespot.Item2);
                     added = true;
                     break;
@@ -37,7 +37,7 @@ namespace VaccinationScheduling.Online
 
                 if (!added)
                 {
-                    Console.WriteLine("No free spot found, adding a new machine");
+                    if (debug) Console.WriteLine("No free spot found, adding a new machine");
                     schedules.Add(new MachineSchedule(global));
                     schedules[schedules.Count - 1].ScheduleJobs(job.MinFirstIntervalStart, job.MinFirstIntervalStart + job.MinGapIntervalStarts);
                 }

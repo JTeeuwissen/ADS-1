@@ -46,8 +46,8 @@ namespace VaccinationScheduling.Shared.Machine
             while (firstJobEnumerate.MoveNext())
             {
                 Range firstJob = firstJobEnumerate.Current;
-                int minTSecondJob = firstJobEnumerate.Current.Start + job.MinGapIntervalStarts;
-                int maxTSecondJob = Math.Min(firstJobEnumerate.Current.End, job.MaxFirstIntervalStart + job.MaxGapIntervalStarts) + job.MaxGapIntervalStarts;
+                int minTSecondJob = Math.Max(firstJobEnumerate.Current.Start, job.MinFirstIntervalStart) + job.MinGapIntervalStarts;
+                int maxTSecondJob = Math.Min(firstJobEnumerate.Current.End, job.MaxFirstIntervalStart + job.MaxGapIntervalStarts);
 
                 // Go through current
                 for (int i = slidingWindowIndex; i < secondRanges.Count; i++)
@@ -66,7 +66,22 @@ namespace VaccinationScheduling.Shared.Machine
                         continue;
                     }
 
-                    return (minTSecondJob, overlap.Item1);
+                    // The job can never start before the first job
+                    int tFirstJob = Math.Max(Math.Max(firstJob.Start, job.MinFirstIntervalStart), overlap.Item1 - job.MaxGapIntervalStarts);
+                    int tSecondJob = Math.Max(tFirstJob + job.MinGapIntervalStarts, overlap.Item1);
+
+                    Console.WriteLine("---------------------------------");
+                    Console.WriteLine($"First Job: {tFirstJob}, Second Job: {tSecondJob}");
+                    Console.WriteLine(freeRangesFirstJob);
+                    Console.WriteLine(freeRangesSecondJob);
+
+
+                    // Make sure the job is within the constaints
+                    Debug.Assert(job.MinFirstIntervalStart <= tFirstJob && tFirstJob <= job.MaxFirstIntervalStart);
+                    Debug.Assert(tFirstJob + job.MinGapIntervalStarts <= tSecondJob);
+                    Debug.Assert(tFirstJob + job.MaxGapIntervalStarts >= tSecondJob);
+
+                    return (tFirstJob, tSecondJob);
                 }
 
                 // Add new items to the list since we can expand the second
@@ -86,11 +101,33 @@ namespace VaccinationScheduling.Shared.Machine
                         continue;
                     }
 
-                    return (firstJob.Start, overlap.Item1);
+                    // The job can never start before the first job
+                    int tFirstJob = Math.Max(Math.Max(firstJob.Start, job.MinFirstIntervalStart), overlap.Item1 - job.MaxGapIntervalStarts);
+                    int tSecondJob = Math.Max(tFirstJob + job.MinGapIntervalStarts, overlap.Item1);
+
+                    Console.WriteLine("---------------------------------");
+                    Console.WriteLine($"First Job: {tFirstJob}, Second Job: {tSecondJob}");
+                    Console.WriteLine(freeRangesFirstJob);
+                    Console.WriteLine(freeRangesSecondJob);
+
+                    // Make sure the job is within the constaints
+                    Debug.Assert(job.MinFirstIntervalStart <= tFirstJob && tFirstJob <= job.MaxFirstIntervalStart);
+                    Debug.Assert(tFirstJob + job.MinGapIntervalStarts <= tSecondJob);
+                    Debug.Assert(tFirstJob + job.MaxGapIntervalStarts >= tSecondJob);
+
+                    return (tFirstJob, tSecondJob);
                 }
             }
 
             return (-1, -1);
+        }
+
+        private (int, int) findJobOverlap(Job job, Range range, int tStart, int tEnd)
+        {
+            int otherStart = Math.Max(tStart - job.MinGapIntervalStarts, range.Start);
+            int otherEnd = Math.Min(tEnd - job.MaxGapIntervalStarts, range.End);
+
+            return default;
         }
 
         /// <summary>
@@ -100,9 +137,10 @@ namespace VaccinationScheduling.Shared.Machine
         /// <param name="tSecondJob">Time at which to schedule the second job</param>
         public void ScheduleJobs(int tFirstJob, int tSecondJob)
         {
-            Range firstJob, secondJob;
+            // The two jobs cannot overlap
+            Debug.Assert(tFirstJob + freeRangesFirstJob.JobLength <= tSecondJob);
 
-            Console.WriteLine($"First Job: {tFirstJob}, Second Job: {tSecondJob}");
+            Range firstJob, secondJob;
 
             // Find the ranges at which the jobs are scheduled
             freeRangesFirstJob.Find(tFirstJob, out firstJob);
@@ -118,21 +156,35 @@ namespace VaccinationScheduling.Shared.Machine
         /// <param name="firstJob">The range that the first job gets scheduled on</param>
         /// <param name="tSecondJob">The time at which to schedule the second job</param>
         /// <param name="secondJob">The range that the first job gets scheduled on</param>
-        public void ScheduleJobs(int tFirstJob, Range firstJob, int tSecondJob, Range secondJob)
+        private void ScheduleJobs(int tFirstJob, Range firstJob, int tSecondJob, Range secondJob)
         {
+            string tree1 = freeRangesFirstJob.ToString();
+            string tree2 = freeRangesSecondJob.ToString();
+
             // Schedule the two jobs
             ScheduleJob(freeRangesFirstJob, firstJob, tFirstJob, freeRangesFirstJob.JobLength);
             ScheduleJob(freeRangesSecondJob, secondJob, tSecondJob, freeRangesSecondJob.JobLength);
 
-            Console.WriteLine("Added to primary tree");
-            Console.WriteLine(freeRangesFirstJob);
-            Console.WriteLine(freeRangesSecondJob);
+            Range temp;
+
+            // Both should not be found anymore in the tree
+            freeRangesFirstJob.Find(tFirstJob, out temp);
+            Debug.Assert(temp == null);
+            freeRangesSecondJob.Find(tSecondJob, out temp);
+            Debug.Assert(temp == null);
+
+            Debug.Assert(tree1 != freeRangesFirstJob.ToString());
+            Debug.Assert(tree2 != freeRangesSecondJob.ToString());
+
+            //Console.WriteLine("Added to primary tree");
+            //Console.WriteLine(freeRangesFirstJob);
+            //Console.WriteLine(freeRangesSecondJob);
 
             // Update the opposite tree to keep the newly scheduled jobs into account
             ScheduleJob(freeRangesFirstJob, tSecondJob, freeRangesSecondJob.JobLength);
             ScheduleJob(freeRangesSecondJob, tFirstJob, freeRangesFirstJob.JobLength);
 
-            Console.WriteLine("Added to secondary tree");
+            Console.WriteLine("Added to both trees!");
             Console.WriteLine(freeRangesFirstJob);
             Console.WriteLine(freeRangesSecondJob);
         }
