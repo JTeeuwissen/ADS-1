@@ -34,7 +34,7 @@ namespace VaccinationScheduling.Shared.Machine
         public (int, int) FindGreedySpot(Job job)
         {
             IEnumerator<Range> firstJobEnumerate = freeRangesFirstJob.EnumerateRange(job.MinFirstIntervalStart, job.MaxFirstIntervalStart).GetEnumerator();
-            IEnumerator<Range> secondJobEnumerate = freeRangesFirstJob.EnumerateRange(
+            IEnumerator<Range> secondJobEnumerate = freeRangesSecondJob.EnumerateRange(
                 job.MinFirstIntervalStart + job.MinGapIntervalStarts,
                 job.MaxFirstIntervalStart + job.MaxGapIntervalStarts
                 ).GetEnumerator();
