@@ -37,7 +37,7 @@ namespace VaccinationScheduling.Shared.Machine
         public (int, int) GetOverlap(int tStart, int tEnd)
         {
             // There is no overlap between the two
-            if (Start > tEnd || End < tStart && tEnd != -1)
+            if (Start > tEnd && tEnd != -1 || End < tStart && End != -1)
             {
                 return (-1, -1);
             }

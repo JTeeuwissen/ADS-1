@@ -75,7 +75,6 @@ namespace VaccinationScheduling.Shared.Machine
                     Console.WriteLine(freeRangesFirstJob);
                     Console.WriteLine(freeRangesSecondJob);
 
-
                     // Make sure the job is within the constaints
                     Debug.Assert(job.MinFirstIntervalStart <= tFirstJob && tFirstJob <= job.MaxFirstIntervalStart);
                     Debug.Assert(tFirstJob + job.MinGapIntervalStarts <= tSecondJob);
@@ -120,14 +119,6 @@ namespace VaccinationScheduling.Shared.Machine
             }
 
             return (-1, -1);
-        }
-
-        private (int, int) findJobOverlap(Job job, Range range, int tStart, int tEnd)
-        {
-            int otherStart = Math.Max(tStart - job.MinGapIntervalStarts, range.Start);
-            int otherEnd = Math.Min(tEnd - job.MaxGapIntervalStarts, range.End);
-
-            return default;
         }
 
         /// <summary>
@@ -176,10 +167,6 @@ namespace VaccinationScheduling.Shared.Machine
             Debug.Assert(tree1 != freeRangesFirstJob.ToString());
             Debug.Assert(tree2 != freeRangesSecondJob.ToString());
 
-            //Console.WriteLine("Added to primary tree");
-            //Console.WriteLine(freeRangesFirstJob);
-            //Console.WriteLine(freeRangesSecondJob);
-
             // Update the opposite tree to keep the newly scheduled jobs into account
             ScheduleJob(freeRangesFirstJob, tSecondJob, freeRangesSecondJob.JobLength);
             ScheduleJob(freeRangesSecondJob, tFirstJob, freeRangesFirstJob.JobLength);
@@ -223,16 +210,15 @@ namespace VaccinationScheduling.Shared.Machine
                     bool res = tree.Delete(foundRange, false, out foundRange);
                     Console.WriteLine("Deleted item");
                     Debug.Assert(res);
-                    return;
                 }
-
-                // Define the new start of the range
-                foundRange.Start = Math.Max(tJob + jobLength, foundRange.Start);
-                return;
+                else
+                {
+                    // Define the new start of the range
+                    foundRange.Start = Math.Max(tJob + jobLength, foundRange.Start);
+                }
             }
-
             // Only need to adapt the end of the range
-            if (foundRange.End - jobLength < tJob && !infiniteRange)
+            else if (foundRange.End - jobLength < tJob && !infiniteRange)
             {
                 // The new range would be negative, so delete it instead
                 if (tJob - tree.JobLength < foundRange.Start)
@@ -240,18 +226,30 @@ namespace VaccinationScheduling.Shared.Machine
                     bool res = tree.Delete(foundRange, false, out foundRange);
                     Debug.Assert(res);
                     Console.WriteLine("Deleted item");
-                    return;
                 }
-
-                // Define new end of the range
+                else
+                {
+                    // Define new end of the range
+                    foundRange.End = Math.Min(tJob - tree.JobLength, foundRange.End);
+                }
+            }
+            else
+            {
+                // It hovers somewhere in the middle, so we need to insert another item
+                int newRangeEnd = foundRange.End;
                 foundRange.End = tJob - tree.JobLength;
-                return;
+                tree.Insert(new Range(tJob + jobLength, newRangeEnd));
             }
 
-            // It hovers somewhere in the middle, so we need to insert another item
-            int newRangeEnd = foundRange.End;
-            foundRange.End = tJob - tree.JobLength;
-            tree.Insert(new Range(tJob + jobLength, newRangeEnd));
+            // We do not have to adapt subsequent items
+            if (jobLength <= tree.JobLength)
+            {
+                return;
+            }
+            else
+            {
+                throw new Exception("Not yet implemented to remove trailing range");
+            }
         }
     }
 }
