@@ -4,7 +4,7 @@ using System.Numerics;
 
 namespace VaccinationScheduling.Generator
 {
-    class Program
+    public class Program
     {
         // Output type
         private static bool _online = true;
@@ -16,7 +16,7 @@ namespace VaccinationScheduling.Generator
 
         // Patient
         private static BigInteger _nrPatients = 20;
-        private static BigInteger _maxExtraGap = 3;
+        private static BigInteger _maxPatientGap = 3;
 
         // Intervals
         // First BigInteger range
@@ -34,10 +34,9 @@ namespace VaccinationScheduling.Generator
         /// <summary>
         /// Entrypoint of the program, generates an input file given the settings in this class
         /// </summary>
-        static void Main()
+        public static void Main()
         {
             LoadSettings();
-
 
             string? filePath = RequestString("Path (Console)")?.Trim('"');
 
@@ -50,7 +49,7 @@ namespace VaccinationScheduling.Generator
         /// <summary>
         /// Print the first 3/4 lines containing the parameters
         /// </summary>
-        static void PrintSettings(TextWriter writer)
+        private static void PrintSettings(TextWriter writer)
         {
             writer.WriteLine(_firstDoseLength);
             writer.WriteLine(_secondDoseLength);
@@ -64,26 +63,23 @@ namespace VaccinationScheduling.Generator
         /// Print the patients to the file, in csv format
         /// </summary>
         /// <param name="writer">File to write the patient information to</param>
-        static void PrintPatients(TextWriter writer)
+        private static void PrintPatients(TextWriter writer)
         {
             Random random = new();
 
             // Write line with random numbers to the file
             for (int i = 0; i < _nrPatients; i++)
             {
-                BigInteger firstIntervalStart = (random.NextBigInteger(
-                    _minFirstIntervalStart,
-                    _maxFirstIntervalStart
-                ));
-                BigInteger firstIntervalEnd = firstIntervalStart + (random.NextBigInteger(
+                BigInteger firstIntervalStart = random.NextBigInteger(_minFirstIntervalStart, _maxFirstIntervalStart);
+                BigInteger firstIntervalEnd = firstIntervalStart + random.NextBigInteger(
                     _minFirstIntervalLength,
                     _maxFirstIntervalLength
-                ));
-                BigInteger patientGap = (random.NextBigInteger(0, _maxExtraGap));
-                BigInteger secondIntervalLength = (random.NextBigInteger(
+                );
+                BigInteger patientGap = random.NextBigInteger(0, _maxPatientGap);
+                BigInteger secondIntervalLength = random.NextBigInteger(
                     _minSecondIntervalLength,
                     _maxSecondIntervalLength
-                ));
+                );
 
                 writer.WriteLine($"{firstIntervalStart}, {firstIntervalEnd}, {patientGap}, {secondIntervalLength}");
             }
@@ -93,7 +89,7 @@ namespace VaccinationScheduling.Generator
         }
 
 
-        static void LoadSettings()
+        private static void LoadSettings()
         {
             if (RequestBool($"{nameof(_online)} ({_online})") is { } online) _online = online;
 
@@ -101,7 +97,7 @@ namespace VaccinationScheduling.Generator
             {
                 // Check fixed values
                 if (nrPatients <= 0)
-                    throw new ArgumentException("No use in generating for <= 0 patients");
+                    throw new ArgumentException($"{nameof(_nrPatients)} should be a positive integer.");
 
                 _nrPatients = nrPatients;
             }
@@ -110,7 +106,7 @@ namespace VaccinationScheduling.Generator
             {
                 // Check fixed values
                 if (firstDoseLength <= 0)
-                    throw new ArgumentException("No use in generating for <= 0 patients");
+                    throw new ArgumentException($"{nameof(_firstDoseLength)} should be a positive integer.");
 
                 _firstDoseLength = firstDoseLength;
             }
@@ -119,7 +115,7 @@ namespace VaccinationScheduling.Generator
             {
                 // Check fixed values
                 if (secondDoseLength <= 0)
-                    throw new ArgumentException("No use in generating for <= 0 patients");
+                    throw new ArgumentException($"{nameof(_secondDoseLength)} should be a positive integer.");
 
                 _secondDoseLength = secondDoseLength;
             }
@@ -128,18 +124,18 @@ namespace VaccinationScheduling.Generator
             {
                 // Check fixed values
                 if (defaultGap < 0)
-                    throw new ArgumentException("Cannot have negative gaps");
+                    throw new ArgumentException($"{nameof(_defaultGap)} should be a non-negative integer.");
 
                 _defaultGap = defaultGap;
             }
 
-            if (RequestBigInteger($"{nameof(_maxExtraGap)} ({_maxExtraGap})") is { } maxExtraGap)
+            if (RequestBigInteger($"{nameof(_maxPatientGap)} ({_maxPatientGap})") is { } maxExtraGap)
             {
                 // Check fixed values
                 if (maxExtraGap < 0)
-                    throw new ArgumentException("Cannot have negative gaps");
+                    throw new ArgumentException($"{nameof(maxExtraGap)} should be a non-negative integer.");
 
-                _maxExtraGap = maxExtraGap;
+                _maxPatientGap = maxExtraGap;
             }
 
             if (RequestBigInteger($"{nameof(_minFirstIntervalStart)} ({_minFirstIntervalStart})") is
@@ -148,7 +144,7 @@ namespace VaccinationScheduling.Generator
             {
                 // Check fixed values
                 if (minFirstIntervalStart < 0)
-                    throw new ArgumentException("First interval start is wrong");
+                    throw new ArgumentException($"{nameof(_minFirstIntervalStart)} should be a non-negative integer.");
 
                 _minFirstIntervalStart = minFirstIntervalStart;
             }
@@ -158,8 +154,10 @@ namespace VaccinationScheduling.Generator
             } maxFirstIntervalStart)
             {
                 // Check fixed values
-                if (_minFirstIntervalStart > maxFirstIntervalStart)
-                    throw new ArgumentException("First interval start is wrong");
+                if (maxFirstIntervalStart < _minFirstIntervalStart)
+                    throw new ArgumentException(
+                        $"{nameof(_maxFirstIntervalStart)} should be larger than or equal to {nameof(_minFirstIntervalStart)}"
+                    );
 
                 _maxFirstIntervalStart = maxFirstIntervalStart;
             }
@@ -170,7 +168,13 @@ namespace VaccinationScheduling.Generator
             {
                 // Check fixed values
                 if (minFirstIntervalLength < 0)
-                    throw new ArgumentException("First interval length variables are wrong");
+                    throw new ArgumentException($"{nameof(_minFirstIntervalLength)} should be a non-negative integer.");
+
+                // Compare dose length with patient range
+                if (minFirstIntervalLength < _firstDoseLength)
+                    throw new ArgumentException(
+                        $"{nameof(_minFirstIntervalLength)} should be larger than or equal to {nameof(_firstDoseLength)}"
+                    );
 
                 _minFirstIntervalLength = minFirstIntervalLength;
             }
@@ -180,8 +184,11 @@ namespace VaccinationScheduling.Generator
             } maxFirstIntervalLength)
             {
                 // Check fixed values
-                if (_minFirstIntervalLength > maxFirstIntervalLength)
-                    throw new ArgumentException("First interval length variables are wrong");
+                if (maxFirstIntervalLength < _minFirstIntervalLength)
+                    throw new ArgumentException(
+                        $"{nameof(_maxFirstIntervalLength)} should be larger than or equal to {nameof(_minFirstIntervalLength)}"
+                    );
+
 
                 _maxFirstIntervalLength = maxFirstIntervalLength;
             }
@@ -192,27 +199,32 @@ namespace VaccinationScheduling.Generator
             {
                 // Check fixed values
                 if (_minSecondIntervalLength < 0)
-                    throw new ArgumentException("First interval length variables are wrong");
+                    throw new ArgumentException(
+                        $"{nameof(_minSecondIntervalLength)} should be a non-negative integer."
+                    );
+
+                // Compare dose length with patient range
+                if (_minSecondIntervalLength < _secondDoseLength)
+                    throw new ArgumentException(
+                        $"{nameof(_minSecondIntervalLength)} should be larger than or equal to {nameof(_secondDoseLength)}"
+                    );
 
                 _minSecondIntervalLength = minSecondIntervalLength;
             }
 
 
+            // ReSharper disable once InvertIf
             if (RequestBigInteger($"{nameof(_maxSecondIntervalLength)} ({_maxSecondIntervalLength})") is
             {
             } maxSecondIntervalLength)
             {
                 // Check fixed values
-                if (_minSecondIntervalLength > maxSecondIntervalLength)
-                    throw new ArgumentException("Second interval length variables are wrong");
+                if (maxSecondIntervalLength < _minSecondIntervalLength)
+                    throw new ArgumentException(
+                        $"{nameof(_maxSecondIntervalLength)} should be larger than or equal to {nameof(_minSecondIntervalLength)}"
+                    );
 
                 _maxSecondIntervalLength = maxSecondIntervalLength;
-            }
-
-            // Compare dose length with patient range
-            if (_firstDoseLength > _minFirstIntervalLength || _secondDoseLength > _minSecondIntervalLength)
-            {
-                throw new ArgumentException("Dose must have enough time sechduled to be valid");
             }
         }
 
