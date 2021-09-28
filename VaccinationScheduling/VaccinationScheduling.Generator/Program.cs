@@ -198,13 +198,13 @@ namespace VaccinationScheduling.Generator
             } minSecondIntervalLength)
             {
                 // Check fixed values
-                if (_minSecondIntervalLength < 0)
+                if (minSecondIntervalLength < 0)
                     throw new ArgumentException(
                         $"{nameof(_minSecondIntervalLength)} should be a non-negative integer."
                     );
 
                 // Compare dose length with patient range
-                if (_minSecondIntervalLength < _secondDoseLength)
+                if (minSecondIntervalLength < _secondDoseLength)
                     throw new ArgumentException(
                         $"{nameof(_minSecondIntervalLength)} should be larger than or equal to {nameof(_secondDoseLength)}"
                     );
