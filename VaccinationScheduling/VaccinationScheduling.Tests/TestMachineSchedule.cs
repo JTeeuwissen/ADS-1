@@ -1,10 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-using Xunit;
-using Xunit.Abstractions;
+﻿using Xunit;
 using VaccinationScheduling.Shared;
 using VaccinationScheduling.Shared.Machine;
 
@@ -14,24 +8,27 @@ namespace VaccinationScheduling.Tests
     {
         // 927, 932, 0, 8
         [Fact]
-        public void testPreviousBug()
+        public void TestPreviousBug()
         {
-            Global global = new Global(2, 5, 0);
-            MachineSchedule machine = new MachineSchedule(global);
+            Global global = new(2, 5, 0);
+            MachineSchedule machine = new(global);
             ScheduleToBoth(machine, 929, 25);
             ScheduleToBoth(machine, 957, 15);
             ScheduleToBoth(machine, 976, 15);
             ScheduleToBoth(machine, 994, 7);
 
-            Assert.Equal("(0,927)->(954,955)->(972,974)->(991,992)->(1001,INFINITY)", machine.freeRangesFirstJob.ToString());
+            Assert.Equal(
+                "(0,927)->(954,955)->(972,974)->(991,992)->(1001,INFINITY)",
+                machine.freeRangesFirstJob.ToString()
+            );
             Assert.Equal("(0,931)->(1001,INFINITY)", machine.freeRangesSecondJob.ToString());
         }
 
         [Fact]
-        public void previousBug()
+        public void PreviousBug()
         {
-            Global global = new Global(2, 5, 0);
-            MachineSchedule machine = new MachineSchedule(global);
+            Global global = new(2, 5, 0);
+            MachineSchedule machine = new(global);
             ScheduleToBoth(machine, 929, 25);
             ScheduleToBoth(machine, 957, 15);
             ScheduleToBoth(machine, 976, 15);
@@ -41,7 +38,7 @@ namespace VaccinationScheduling.Tests
             Assert.Equal("(0,0)", machine.freeRangesSecondJob.ToString());
         }
 
-        private void ScheduleToBoth(MachineSchedule ms, int tJobStart, int jobLength)
+        private static void ScheduleToBoth(MachineSchedule ms, int tJobStart, int jobLength)
         {
             ms.ScheduleJob(ms.freeRangesFirstJob, tJobStart, jobLength);
             ms.ScheduleJob(ms.freeRangesSecondJob, tJobStart, jobLength);

@@ -13,6 +13,7 @@ namespace VaccinationScheduling.Shared
         /// Minimum time at which the first interval starts
         /// </summary>
         public int MinFirstIntervalStart;
+
         /// <summary>
         /// Maximum time at which the first interval starts
         /// </summary>
@@ -22,6 +23,7 @@ namespace VaccinationScheduling.Shared
         /// The minimum gap between the first and the second interval
         /// </summary>
         public int MinGapIntervalStarts;
+
         /// <summary>
         /// The maximum gap between the first and the second interval
         /// </summary>
@@ -37,12 +39,18 @@ namespace VaccinationScheduling.Shared
         /// <summary>
         /// Construct a patients scheduling needs
         /// </summary>
-        /// <param name="parameters">Parameters of the program</param>
+        /// <param name="global">Global parameters of the program</param>
         /// <param name="firstIntervalStart">First slot patient is available in for the first jab</param>
         /// <param name="firstIntervalEnd">Last slot patient is available in for the first jab</param>
         /// <param name="secondIntervalLength">Second slot length patient is available at</param>
         /// <param name="extraDelay">The extra delay that the patient wants between the jabs</param>
-        public Job(Global global, int firstIntervalStart, int firstIntervalEnd, int extraDelay, int secondIntervalLength)
+        public Job(
+            Global global,
+            int firstIntervalStart,
+            int firstIntervalEnd,
+            int extraDelay,
+            int secondIntervalLength
+        )
         {
             MinFirstIntervalStart = firstIntervalStart;
             MaxFirstIntervalStart = firstIntervalEnd - global.TFirstDose + 1;
@@ -63,36 +71,28 @@ namespace VaccinationScheduling.Shared
         /// <param name="other">other patient object to compare to</param>
         /// <returns>
         /// ret==0 Are equal
-        /// ret<0 This one predecends other
-        /// ret>0 This one follows other
+        /// ret lt 0 This one precedes other
+        /// ret gt 0 This one follows other
         /// </returns>
         public int CompareTo(Job? other)
         {
             // Always is before a null patient
             if (other == null)
-            {
                 return -1;
-            }
 
             // Compare on properties in this order:
             // First slot, gap length, second slot
             int deltaMinFirstIntervalStart = MinFirstIntervalStart - other.MinFirstIntervalStart;
             if (deltaMinFirstIntervalStart != 0)
-            {
                 return deltaMinFirstIntervalStart;
-            }
 
             int deltaMaxFirstIntervalStart = MaxFirstIntervalStart - other.MaxFirstIntervalStart;
             if (deltaMaxFirstIntervalStart != 0)
-            {
                 return deltaMaxFirstIntervalStart;
-            }
 
             int deltaMinGapIntervalStarts = MinGapIntervalStarts - other.MinGapIntervalStarts;
             if (deltaMinGapIntervalStarts != 0)
-            {
                 return deltaMinGapIntervalStarts;
-            }
 
             int deltaMaxGapIntervalStarts = MaxGapIntervalStarts - other.MaxGapIntervalStarts;
             return deltaMaxGapIntervalStarts;

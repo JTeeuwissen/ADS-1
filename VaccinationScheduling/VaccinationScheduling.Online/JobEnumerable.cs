@@ -6,11 +6,11 @@ namespace VaccinationScheduling.Online
 {
     public class JobEnumerable : IEnumerable<Job>
     {
-        private Global global;
+        private readonly Global _global;
 
         public JobEnumerable(Global global)
         {
-            this.global = global;
+            _global = global;
         }
 
         public IEnumerator<Job> GetEnumerator()
@@ -20,7 +20,7 @@ namespace VaccinationScheduling.Online
                 Job job;
                 try
                 {
-                    job =  ReadUtils.ReadJob(global);
+                    job =  ReadUtils.ReadJob(_global);
                 }
                 catch
                 {

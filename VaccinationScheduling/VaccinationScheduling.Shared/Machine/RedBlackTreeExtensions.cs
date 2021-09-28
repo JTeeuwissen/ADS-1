@@ -1,9 +1,7 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
+﻿using System.Collections.Generic;
 using System.Text;
-using System.Threading.Tasks;
 using System.Diagnostics;
+using System.Diagnostics.CodeAnalysis;
 
 namespace VaccinationScheduling.Shared.Machine
 {
@@ -19,10 +17,10 @@ namespace VaccinationScheduling.Shared.Machine
         /// <param name="key">Key to search for.</param>
         /// <param name="item">Returns the found item, before replacing (if function returns true).</param>
         /// <returns>True if the key was found.</returns>
-        public bool Find(int key, out Range item)
+        public bool Find(int key, [MaybeNullWhen(false)] out Range item)
         {
-            Node current = root;      // current search location in the tree
-            Node found = null;      // last node found with the key, or null if none.
+            Node? current = root; // current search location in the tree
+            Node? found = null; // last node found with the key, or null if none.
 
             while (current != null)
             {
@@ -48,11 +46,9 @@ namespace VaccinationScheduling.Shared.Machine
                 item = found.item;
                 return true;
             }
-            else
-            {
-                item = default(Range);
-                return false;
-            }
+
+            item = default;
+            return false;
         }
 
         /// <summary>
@@ -63,8 +59,8 @@ namespace VaccinationScheduling.Shared.Machine
         /// <returns>True if the key was found. False if it returns the item previous to the searched key</returns>
         public bool FindOrPrevious(int key, out Range item)
         {
-            Node current = root;      // current search location in the tree
-            Node found = null;      // last node found with the key, or null if none.
+            Node? current = root; // current search location in the tree
+            Node? found = null; // last node found with the key, or null if none.
             Node previous = root;
 
             while (current != null)
@@ -92,11 +88,9 @@ namespace VaccinationScheduling.Shared.Machine
                 item = found.item;
                 return true;
             }
-            else
-            {
-                item = previous.item;
-                return false;
-            }
+
+            item = previous.item;
+            return false;
         }
 
         /// <summary>
@@ -107,23 +101,24 @@ namespace VaccinationScheduling.Shared.Machine
         /// <returns>A RangeTester delegate that tests for an item in the given range.</returns>
         public RangeTester DoubleBoundedRangeTester(int first, int last)
         {
-            return delegate (Range item)
+            return delegate(Range item)
             {
                 if (item.CompareTo(first) < 0)
-                    return -1;     // item is before or equal to first.
+                    return -1; // item is before or equal to first.
 
                 if (last == -1)
                     return 0;
 
+                // ReSharper disable once ConvertIfStatementToReturnStatement
                 if (item.CompareTo(last) > 0)
-                    return 1;      // item is after or equal to last
+                    return 1; // item is after or equal to last
 
-                return 0;      // item is between first and last.
+                return 0; // item is between first and last.
             };
         }
 
         /// <summary>
-        /// Inclusive enumeratable of the given range. Enumerates the items in order.
+        /// Inclusive enumerable of the given range. Enumerates the items in order.
         /// </summary>
         /// <param name="first">Left bound of the enumerate range</param>
         /// <param name="last">Right bound of the enumerate range</param>
@@ -142,10 +137,10 @@ namespace VaccinationScheduling.Shared.Machine
         /// <returns>false if duplicate exists, otherwise true.</returns>
         public void Insert(Range item)
         {
-            Node node = root;
-            Node parent = null, gparent = null, ggparent = null;  // parent, grand, a great-grantparent of node.
-            bool wentLeft = false, wentRight = false;        // direction from parent to node.
-            bool rotated;
+            Node? node = root;
+            Node? parent = null, gparent = null, ggparent = null; // parent, grand, a great-grandparent of node.
+            bool wentLeft = false, wentRight = false; // direction from parent to node.
+            bool rotated; //TODO gerard, why is dit?
 
             // The tree may be changed.
             StopEnumerations();
@@ -154,13 +149,15 @@ namespace VaccinationScheduling.Shared.Machine
             {
                 // If we find a node with two red children, split it so it doesn't cause problems
                 // when inserting a node.
-                if (node.left != null && node.left.IsRed && node.right != null && node.right.IsRed)
+                if (node.left is { IsRed: true } && node.right is { IsRed: true })
                 {
                     node = InsertSplit(ggparent, gparent, parent, node, out rotated);
                 }
 
                 // Keep track of parent, grandparent, great-grand parent.
-                ggparent = gparent; gparent = parent; parent = node;
+                ggparent = gparent;
+                gparent = parent;
+                parent = node;
 
                 // Compare the key and the node.
                 int compare = item.CompareTo(node.item);
@@ -174,19 +171,19 @@ namespace VaccinationScheduling.Shared.Machine
                 if (compare < 0)
                 {
                     node = node.left;
-                    wentLeft = true; wentRight = false;
+                    wentLeft = true;
+                    wentRight = false;
                 }
                 else
                 {
                     node = node.right;
-                    wentRight = true; wentLeft = false;
+                    wentRight = true;
+                    wentLeft = false;
                 }
             }
 
             // Create a new node.
-            node = new Node();
-            node.item = item;
-            node.Count = 1;
+            node = new Node { item = item, Count = 1 };
 
             // Link the node into the tree.
             if (wentLeft)
@@ -208,14 +205,11 @@ namespace VaccinationScheduling.Shared.Machine
 
         public override string ToString()
         {
-            StringBuilder sb = new StringBuilder();
+            StringBuilder sb = new();
             foreach (Range range in this)
             {
-                sb.Append(range.ToString());
-                if (range.End != -1)
-                {
-                    sb.Append("->");
-                }
+                sb.Append(range);
+                if (range.End != -1) sb.Append("->");
             }
 
             return sb.ToString();

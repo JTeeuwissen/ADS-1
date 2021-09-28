@@ -17,8 +17,8 @@ namespace VaccinationScheduling.Shared.Machine
     /// </summary>
     public class Node
     {
-        public Node left, right;
-        public Range item;
+        public Node? left, right;
+        public Range? item;
 
         private const uint REDMASK = 0x80000000;
         private uint count;
@@ -28,7 +28,7 @@ namespace VaccinationScheduling.Shared.Machine
         /// </summary>
         public bool IsRed
         {
-            get { return (count & REDMASK) != 0; }
+            get => (count & REDMASK) != 0;
             set
             {
                 if (value)
@@ -45,8 +45,8 @@ namespace VaccinationScheduling.Shared.Machine
         /// </summary>
         public int Count
         {
-            get { return (int)(count & ~REDMASK); }
-            set { count = (count & REDMASK) | (uint)value; }
+            get => (int)(count & ~REDMASK);
+            set => count = (count & REDMASK) | (uint)value;
         }
 
         /// <summary>
@@ -73,10 +73,7 @@ namespace VaccinationScheduling.Shared.Machine
         /// <returns>The cloned node.</returns>
         public Node Clone()
         {
-            Node newNode = new Node();
-            newNode.item = item;
-
-            newNode.count = count;
+            Node newNode = new() { item = item, count = count };
 
             if (left != null)
                 newNode.left = left.Clone();

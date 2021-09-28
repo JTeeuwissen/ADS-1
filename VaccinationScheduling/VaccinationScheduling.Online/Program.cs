@@ -1,55 +1,44 @@
-﻿using System;
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 using VaccinationScheduling.Shared;
 using VaccinationScheduling.Shared.Machine;
+using static VaccinationScheduling.Shared.Extensions;
 
 namespace VaccinationScheduling.Online
 {
-    public class Program
+    public static class Program
     {
-        private Global global;
-        private JobEnumerable jobs;
-        bool debug = true;
-
-        List<MachineSchedule> schedules = new List<MachineSchedule>();
-
-        public Program()
+        public static void Main()
         {
-            global = ReadUtils.ReadGlobal();
-            jobs = new JobEnumerable(global);
+            Global global = ReadUtils.ReadGlobal();
+            JobEnumerable jobs = new(global);
+            List<MachineSchedule> schedules = new();
 
             foreach (Job job in jobs)
             {
                 bool added = false;
 
-                for (int i = 0; i < schedules.Count; i++)
+                foreach (MachineSchedule schedule in schedules)
                 {
-                    (int, int) freespot = schedules[i].FindGreedySpot(job);
+                    (int, int) freespot = schedule.FindGreedySpot(job);
                     if (freespot == (-1, -1))
-                    {
                         continue;
-                    }
 
-                    schedules[i].ScheduleJobs(freespot.Item1, freespot.Item2);
+                    schedule.ScheduleJobs(freespot.Item1, freespot.Item2);
                     added = true;
                     break;
                 }
 
-                if (!added)
-                {
-                    if (debug) Console.WriteLine("No free spot found, adding a new machine");
-                    schedules.Add(new MachineSchedule(global));
-                    schedules[schedules.Count - 1].ScheduleJobs(job.MinFirstIntervalStart, job.MinFirstIntervalStart + job.MinGapIntervalStarts);
-                }
+                if (added) continue;
+                WriteDebugLine("No free spot found, adding a new machine");
+
+                schedules.Add(new MachineSchedule(global));
+                schedules[^1].ScheduleJobs(
+                    job.MinFirstIntervalStart,
+                    job.MinFirstIntervalStart + job.MinGapIntervalStarts
+                );
             }
 
-            Console.WriteLine($"Solution has {schedules.Count} number of machines");
-        }
-
-        public static void Main()
-        {
-            // Escape the static environment
-            new Program();
+            WriteDebugLine($"Solution has {schedules.Count} number of machines");
         }
     }
 }

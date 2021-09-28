@@ -3,27 +3,18 @@ using VaccinationScheduling.Shared;
 
 namespace VaccinationScheduling.Offline
 {
-    public class Program
+    public static class Program
     {
-        private Global global;
-        private Job[] jobs;
-
-        public Program()
+        public static void Main()
         {
-            global = ReadUtils.ReadGlobal();
+            Global global = ReadUtils.ReadGlobal();
             int jobCount = ReadUtils.ReadNumber();
 
-            jobs = Enumerable.Range(0, jobCount).Select(_ => ReadUtils.ReadJob(global)).ToArray();
+            Job[] jobs = Enumerable.Range(0, jobCount).Select(_ => ReadUtils.ReadJob(global)).ToArray();
 
             // TODO Sort jobs
             // TODO Schedule
             // TODO Output
-        }
-
-        public static void Main()
-        {
-            // Easy way to get out of static
-            new Program();
         }
     }
 }
