@@ -7,6 +7,10 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <PackageReference Include="Google.OrTools" Version="9.0.9048" />
+  </ItemGroup>
+
+  <ItemGroup>
     <ProjectReference Include="..\VaccinationScheduling.Shared\VaccinationScheduling.Shared.csproj" />
   </ItemGroup>
 
