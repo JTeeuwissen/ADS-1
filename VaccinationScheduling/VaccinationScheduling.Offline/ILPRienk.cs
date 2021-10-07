@@ -2,6 +2,9 @@
 
 namespace VaccinationScheduling.Offline
 {
+    /// <summary>
+    /// See <see href="https://developers.google.cn/optimization/assignment/assignment_example"/> for more information.
+    /// </summary>
     static class ILPRienk
     {
         private const int jabCount = 2;
@@ -18,8 +21,8 @@ namespace VaccinationScheduling.Offline
             int p2
         )
         {
-            // Create the linear solver with the GLOP backend.
-            Solver solver = Solver.CreateSolver("GLOP");
+            // Create the linear solver with the SCIP backend.
+            Solver solver = Solver.CreateSolver("SCIP");
 
             // Variable J[i,j,m,t] is 1 if jab j of job i is scheduled on machine m in timeslot t and 0 otherwise
             Variable[,,,] J = new Variable[jobCount, jabCount, machineCount, maxTime];
@@ -178,8 +181,11 @@ namespace VaccinationScheduling.Offline
                 constraint.SetCoefficient(P2[i, t], -1);
             }
 
-            // TODO
-            //solver.Minimize(LinearExpr.Sum(M)));
+            // Minimize P = SUM(M_k, (0<=k<k_max))
+            // Minimize the sum of all used machines.
+            Objective objective = solver.Objective();
+            for (int m = 0; m < machineCount; ++m) objective.SetCoefficient(M[m], 1);
+            objective.SetMinimization();
 
             return solver;
         }
