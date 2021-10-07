@@ -47,7 +47,7 @@ namespace VaccinationScheduling.Shared.Machine
                 return true;
             }
 
-            item = default;
+            item = new Range(-1, -1);
             return false;
         }
 
@@ -99,7 +99,7 @@ namespace VaccinationScheduling.Shared.Machine
         /// <param name="first">The lower bound.</param>
         /// <param name="last">The upper bound.</param>
         /// <returns>A RangeTester delegate that tests for an item in the given range.</returns>
-        public RangeTester DoubleBoundedRangeTester(int first, int last)
+        private RangeTester DoubleBoundedRangeTester(int first, int last)
         {
             return delegate(Range item)
             {
@@ -127,6 +127,18 @@ namespace VaccinationScheduling.Shared.Machine
         {
             RangeTester rangeTester = DoubleBoundedRangeTester(first, last);
             return EnumerateRange(rangeTester);
+        }
+
+        /// <summary>
+        /// Inclusive enumerable of the given range. Enumerates the items in order.
+        /// </summary>
+        /// <param name="first">Left bound of the enumerate range</param>
+        /// <param name="last">Right bound of the enumerate range</param>
+        /// <returns>Enumerable that can be used in a foreach loop</returns>
+        public IEnumerable<Range> FastEnumerateRange(int first, int last)
+        {
+            RangeTester rangeTester = DoubleBoundedRangeTester(first, last);
+            return FastEnumerateRangeInOrder(rangeTester, root);
         }
 
         /// <summary>
@@ -163,7 +175,7 @@ namespace VaccinationScheduling.Shared.Machine
                 int compare = item.CompareTo(node.item);
 
                 // Overlapping ranges are not allowed!
-                Debug.Assert(compare != 0);
+                //Debug.Assert(compare != 0);
 
                 node.IncrementCount();
 
@@ -191,10 +203,7 @@ namespace VaccinationScheduling.Shared.Machine
             else if (wentRight)
                 parent.right = node;
             else
-            {
-                Debug.Assert(root == null);
                 root = node;
-            }
 
             // Maintain the red-black policy.
             InsertSplit(ggparent, gparent, parent, node, out rotated);
@@ -203,10 +212,239 @@ namespace VaccinationScheduling.Shared.Machine
             count += 1;
         }
 
-        public override string ToString()
+        /// <summary>
+        /// Enumerate all the items in a custom range, under and including node, in-order.
+        /// </summary>
+        /// <param name="rangeTester">Tests an item against the custom range.</param>
+        /// <param name="node">Node to begin enumeration. May be null.</param>
+        /// <returns>An enumerable of the items.</returns>
+        /// <exception cref="InvalidOperationException">The tree has an item added or deleted during the enumeration.</exception>
+        private IEnumerable<Range> FastEnumerateRangeInOrder(RangeTester rangeTester, Node root)
+        {
+            Stack<(CommandType, Node)> stack = new Stack<(CommandType, Node)>();
+            Node current = root;
+            int compare = 1;
+
+            // Find the highest parent that overlaps with the range
+            while (current != null)
+            {
+                compare = rangeTester(current.item);
+
+                if (compare > 0)
+                {
+                    current = current.left;
+                }
+                else if (compare < 0)
+                {
+                    current = current.right;
+                }
+                else
+                {
+                    break;
+                }
+            }
+
+            // No node found that overlaps the range
+            if (current == null)
+            {
+                yield break;
+            }
+
+            stack.Push((CommandType.ExpandAndYield, current));
+            CommandType commandType;
+            // Now we can enumerate the stack left from the root
+            while (stack.Count != 0)
+            {
+                (commandType, current) = stack.Pop();
+
+                // Current is null
+                if (current == null)
+                {
+                    continue;
+                }
+
+                // We have to yield the current item
+                if (commandType == CommandType.Yield)
+                {
+                    yield return current.item;
+                }
+                // We need to expand to get the next item
+                else
+                {
+                    if (current.right != null)
+                    {
+                        compare = rangeTester(current.right.item);
+                        if (compare == 0)
+                        {
+                            stack.Push((CommandType.ExpandAndYield, current.right));
+                        }
+                        // Right item is not too small
+                        else if (compare < 0)
+                        {
+                            stack.Push((CommandType.Expand, current.right));
+                        }
+                    }
+
+                    if (commandType == CommandType.ExpandAndYield)
+                        stack.Push((CommandType.Yield, current));
+
+                    if (current.left != null)
+                    {
+                        compare = rangeTester(current.left.item);
+                        if (compare == 0)
+                        {
+                            stack.Push((CommandType.ExpandAndYield, current.left));
+                        }
+                        // Left item is not too big
+                        else if (compare > 0)
+                        {
+                            // We still want to check
+                            stack.Push((CommandType.Expand, current.left));
+                        }
+                    }
+                }
+            }
+        }
+
+        /*/// <summary>
+        /// Enumerate all the items in a custom range, under and including node, in-order.
+        /// </summary>
+        /// <param name="rangeTester">Tests an item against the custom range.</param>
+        /// <param name="node">Node to begin enumeration. May be null.</param>
+        /// <returns>An enumerable of the items.</returns>
+        /// <exception cref="InvalidOperationException">The tree has an item added or deleted during the enumeration.</exception>
+        private IEnumerable<Range> FastEnumerateRangeInOrder(RangeTester rangeTester, Node root)
+        {
+            Stack<Node> stack = new Stack<Node>();
+            Node current = root;
+            int compare = 1;
+
+            // Find the highest parent that overlaps with the range
+            while (current != null)
+            {
+                compare = rangeTester(current.item);
+
+                if (compare > 0)
+                {
+                    current = current.left;
+                }
+                else if (compare < 0)
+                {
+                    current = current.right;
+                }
+                else
+                {
+                    break;
+                }
+            }
+
+            // Go to the most left item containing the lower range
+            expandStackLeft(stack, current, rangeTester);
+
+            bool enumeratingStarted = true;
+            bool goingLeft = true;
+            bool wentLeft = false;
+            bool goingDown = true;
+            bool pushed = false;
+
+            // Now we can enumerate the stack left from the root
+            while (stack.Count != 0)
+            {
+                if (goingLeft)
+                {
+                    wentLeft = false;
+                    compare = rangeTester(current.item);
+                    // Too high
+                    if (compare > 0)
+                    {
+                        goingLeft = false;
+                    }
+                    else
+                    {
+                        goingLeft = true;
+                        stack.Push(current);
+                        current = current.left;
+                        continue;
+                    }
+                    //current = stack.Pop();
+                    //yield return current.item;
+                }
+                else if (!goingLeft)
+                {
+                    current = stack.Pop();
+                    if (!wentLeft)
+                    {
+
+                    }
+                }
+            }
+        }*/
+
+        private void expandStackLeft(Stack<Node> stack, Node node, RangeTester rangeTester)
+        {
+            int compare = 0;
+            while (node != null)
+            {
+                compare = rangeTester(node.item);
+                if (compare == 0)
+                {
+                    stack.Push(node);
+                    node = node.left;
+                }
+                // Too low
+                else if (compare < 0)
+                {
+                    node = node.right;
+                }
+                // If we went too high there is no more items to ad to the stack
+                else
+                {
+                    break;
+                }
+            }
+        }
+
+        private void expandStackRight(Stack<Node> stack, Node node, RangeTester rangeTester)
+        {
+            int compare = 0;
+            while (node != null)
+            {
+                compare = rangeTester(node.item);
+                if (compare == 0)
+                {
+                    stack.Push(node);
+                    node = node.right;
+                }
+                // Too high, see if the left branch does still contain some range
+                else if (compare > 0)
+                {
+                    node = node.left;
+                }
+                // Cannot find an item that is too
+                else
+                {
+                    break;
+                }
+            }
+        }
+
+        /*public override string ToString()
         {
             StringBuilder sb = new();
             foreach (Range range in this)
+            {
+                sb.Append(range);
+                if (range.End != -1) sb.Append("->");
+            }
+
+            return sb.ToString();
+        }*/
+
+        public override string ToString()
+        {
+            StringBuilder sb = new();
+            //foreach (Range range in FastEnumerateRange(0, -1))
+            foreach (Range range in EnumerateRange(0, -1))
             {
                 sb.Append(range);
                 if (range.End != -1) sb.Append("->");

@@ -38,10 +38,10 @@ namespace VaccinationScheduling.Tests
             Assert.Equal("(0,0)", machine.freeRangesSecondJob.ToString());
         }
 
-        private static void ScheduleToBoth(MachineSchedule ms, int tJobStart, int jobLength)
+        private void ScheduleToBoth(MachineSchedule ms, int tJobStart, int jobLength)
         {
-            MachineSchedule.ScheduleJob(ms.freeRangesFirstJob, tJobStart, jobLength);
-            MachineSchedule.ScheduleJob(ms.freeRangesSecondJob, tJobStart, jobLength);
+            ms.ScheduleJob(ms.freeRangesFirstJob, tJobStart, jobLength);
+            ms.ScheduleJob(ms.freeRangesSecondJob, tJobStart, jobLength);
         }
 
         // (0,927)->(954,955)->(972,974)->(991,992)->(1001,INFINITY)

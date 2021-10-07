@@ -3,6 +3,8 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using FsCheck;
+using FsCheck.Xunit;
 using Xunit;
 using VaccinationScheduling.Shared;
 using VaccinationScheduling.Shared.Machine;
@@ -153,6 +155,58 @@ namespace VaccinationScheduling.Tests.Shared.Machine
             Assert.Equal("(0,1)->(9,10)->(18,INFINITY)", secondTree.ToString());
             ms.ScheduleJob(secondTree, 9, 3);
             Assert.Equal("(0,1)->(18,INFINITY)", secondTree.ToString());
+        }
+
+        [Fact]
+        public void TestMultipleSchedules()
+        {
+            VaccinationScheduling.Shared.Machine.Range range = new(0, 0);
+            System.Random random = new System.Random();
+
+            Prop.ForAll(Arb.From(Gen.Choose(0, 7).Four()), valueTuple =>
+            {
+                MachineSchedule ms = new MachineSchedule(new Global(3, 5, 0));
+
+                int tFirstJob = valueTuple.Item1;
+                int tSecondJob = tFirstJob + 3 + valueTuple.Item2;
+                int tThirdJob = tSecondJob + 3 + valueTuple.Item3;
+                int tFourthJob = tThirdJob + 3 + valueTuple.Item4;
+
+                int count = 1;
+
+                Assert.Equal(count, ms.freeRangesFirstJob.ElementCount);
+
+                ms.ScheduleJob(ms.freeRangesFirstJob, tFirstJob, 3);
+                if (valueTuple.Item1 >= 3)
+                {
+                    count++;
+                }
+                Assert.Equal(count, ms.freeRangesFirstJob.ElementCount);
+
+                ms.ScheduleJob(ms.freeRangesFirstJob, tSecondJob, 3);
+                if (valueTuple.Item2 >= 3)
+                {
+                    count++;
+                }
+                Assert.Equal(count, ms.freeRangesFirstJob.ElementCount);
+
+                ms.ScheduleJob(ms.freeRangesFirstJob, tThirdJob, 3);
+                if (valueTuple.Item3 >= 3)
+                {
+                    count++;
+                }
+                Assert.Equal(count, ms.freeRangesFirstJob.ElementCount);
+
+                ms.ScheduleJob(ms.freeRangesFirstJob, tFourthJob, 3);
+                if (valueTuple.Item4 > 3)
+                {
+                    count++;
+                }
+                Assert.Equal(count, ms.freeRangesFirstJob.ElementCount);
+
+                return true;
+
+            }).QuickCheckThrowOnFailure();
         }
     }
 }
