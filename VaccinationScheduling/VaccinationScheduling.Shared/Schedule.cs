@@ -34,9 +34,6 @@
         /// Format the schedule to the desired output.
         /// </summary>
         /// <returns>A string version of the schedule.</returns>
-        public override string ToString()
-        {
-            return $"{T1}, {M1}, {T2}, {M2}";
-        }
+        public override string ToString() => $"{T1}, {M1}, {T2}, {M2}";
     }
 }

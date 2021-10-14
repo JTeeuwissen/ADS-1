@@ -29,12 +29,12 @@ namespace VaccinationScheduling.Shared
         /// </summary>
         public int MaxGapIntervalStarts;
 
-        // Do NOT use these for the main program
-        // Only for verification since these are inefficient to use whilst scheduling
-        private int firstIntervalStart;
-        private int firstIntervalEnd;
-        private int secondIntervalLength;
-        private int extraDelay;
+        // Only for offline solver.
+        // And for verification since these are inefficient to use whilst scheduling
+        public int FirstIntervalStart;
+        public int FirstIntervalEnd;
+        public int SecondIntervalLength;
+        public int ExtraDelay;
 
         /// <summary>
         /// Construct a patients scheduling needs
@@ -59,10 +59,10 @@ namespace VaccinationScheduling.Shared
 
             // DO NOT USE THESE VARIABLES
             // Only for later verification of the answer
-            this.firstIntervalStart = firstIntervalStart;
-            this.firstIntervalEnd = firstIntervalEnd;
-            this.secondIntervalLength = secondIntervalLength;
-            this.extraDelay = extraDelay;
+            this.FirstIntervalStart = firstIntervalStart;
+            this.FirstIntervalEnd = firstIntervalEnd;
+            this.SecondIntervalLength = secondIntervalLength;
+            this.ExtraDelay = extraDelay;
         }
 
         /// <summary>
