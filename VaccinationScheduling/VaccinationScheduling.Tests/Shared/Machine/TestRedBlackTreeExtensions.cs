@@ -1,10 +1,5 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 using FsCheck;
-using FsCheck.Xunit;
 using Xunit;
 using VaccinationScheduling.Shared;
 using VaccinationScheduling.Shared.Machine;

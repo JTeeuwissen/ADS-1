@@ -1,4 +1,5 @@
 ﻿using System.Collections.Generic;
+using System.Linq;
 using VaccinationScheduling.Shared;
 using VaccinationScheduling.Shared.Machine;
 using static VaccinationScheduling.Shared.Extensions;
@@ -15,20 +16,21 @@ namespace VaccinationScheduling.Online
 
             foreach (Job job in jobs)
             {
-                bool added = false;
-
-                foreach (MachineSchedule schedule in schedules)
+                // Returns whether a job was added.
+                bool ScheduleJob()
                 {
-                    (int, int) freespot = schedule.FindGreedySpot(job);
-                    if (freespot == (-1, -1))
-                        continue;
+                    foreach (MachineSchedule schedule in schedules)
+                    {
+                        if (schedule.FindGreedySpot(job) is not var (tFirstJob, tSecondJob)) continue;
+                        schedule.ScheduleJobs(tFirstJob, tSecondJob);
+                        return true;
+                    }
 
-                    schedule.ScheduleJobs(freespot.Item1, freespot.Item2);
-                    added = true;
-                    break;
+                    return false;
                 }
 
-                if (added) continue;
+                if (ScheduleJob()) continue;
+
                 WriteDebugLine("No free spot found, adding a new machine");
 
                 schedules.Add(new MachineSchedule(global));

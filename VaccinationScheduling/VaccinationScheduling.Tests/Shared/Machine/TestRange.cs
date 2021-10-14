@@ -1,12 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-using VaccinationScheduling.Shared;
-using Xunit;
-using Xunit.Abstractions;
-using VaccinationScheduling.Shared.Machine;
+﻿using Xunit;
 
 namespace VaccinationScheduling.Tests.Shared.Machine
 {
@@ -95,18 +87,16 @@ namespace VaccinationScheduling.Tests.Shared.Machine
             VaccinationScheduling.Shared.Machine.Range range3 = new(4, 10);
 
             // No overlap
-            (int, int) noOverlap = (-1, -1);
+            Assert.Null(range1.GetOverlap(0, 0));
 
-            Assert.Equal(noOverlap, range1.GetOverlap(0, 0));
+            Assert.Null(range2.GetOverlap(1, -1));
+            Assert.Null(range2.GetOverlap(1, 100));
 
-            Assert.Equal(noOverlap, range2.GetOverlap(1, -1));
-            Assert.Equal(noOverlap, range2.GetOverlap(1, 100));
-
-            Assert.Equal(noOverlap, range3.GetOverlap(0, 3));
-            Assert.Equal(noOverlap, range3.GetOverlap(0, 0));
-            Assert.Equal(noOverlap, range3.GetOverlap(11, -1));
-            Assert.Equal(noOverlap, range3.GetOverlap(11, 19));
-            Assert.Equal(noOverlap, range3.GetOverlap(20, -1));
+            Assert.Null(range3.GetOverlap(0, 3));
+            Assert.Null(range3.GetOverlap(0, 0));
+            Assert.Null(range3.GetOverlap(11, -1));
+            Assert.Null(range3.GetOverlap(11, 19));
+            Assert.Null(range3.GetOverlap(20, -1));
         }
 
         [Fact]

@@ -1,10 +1,5 @@
 ﻿using System;
-using System.Diagnostics;
 using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-using VaccinationScheduling.Shared;
 
 namespace VaccinationScheduling.Shared.Machine
 {
@@ -31,7 +26,7 @@ namespace VaccinationScheduling.Shared.Machine
         }
 
         // Finds the first available spot inside the range.
-        public (int, int) FindGreedySpot(Job job)
+        public (int, int)? FindGreedySpot(Job job)
         {
             IEnumerator<Range> firstJobEnumerate = freeRangesFirstJob.EnumerateRange(job.MinFirstIntervalStart, job.MaxFirstIntervalStart).GetEnumerator();
             IEnumerator<Range> secondJobEnumerate = freeRangesSecondJob.EnumerateRange(
@@ -39,7 +34,7 @@ namespace VaccinationScheduling.Shared.Machine
                 job.MaxFirstIntervalStart + job.MaxGapIntervalStarts
                 ).GetEnumerator();
 
-            List<Range> secondRanges = new List<Range>();
+            List<Range> secondRanges = new();
             int slidingWindowIndex = 0;
 
             // Whilst there are still possible places left
@@ -58,17 +53,14 @@ namespace VaccinationScheduling.Shared.Machine
                         slidingWindowIndex++;
                         continue;
                     }
-
-                    (int, int) overlap = secondRanges[i].GetOverlap(minTSecondJob, maxTSecondJob);
+                    
                     // There is no overlap
-                    if (overlap == (-1, -1))
-                    {
+                    if (secondRanges[i].GetOverlap(minTSecondJob, maxTSecondJob) is not var (tCurrentFirstJob, _))
                         continue;
-                    }
 
                     // The job can never start before the first job
-                    int tFirstJob = Math.Max(Math.Max(firstJob.Start, job.MinFirstIntervalStart), overlap.Item1 - job.MaxGapIntervalStarts);
-                    int tSecondJob = Math.Max(tFirstJob + job.MinGapIntervalStarts, overlap.Item1);
+                    int tFirstJob = Math.Max(Math.Max(firstJob.Start, job.MinFirstIntervalStart), tCurrentFirstJob - job.MaxGapIntervalStarts);
+                    int tSecondJob = Math.Max(tFirstJob + job.MinGapIntervalStarts, tCurrentFirstJob);
 
                     Console.WriteLine("---------------------------------");
                     Console.WriteLine($"First Job: {tFirstJob}, Second Job: {tSecondJob}");
@@ -83,21 +75,15 @@ namespace VaccinationScheduling.Shared.Machine
                 {
                     secondRanges.Add(secondJobEnumerate.Current);
                     if (secondJobEnumerate.Current.Start > maxTSecondJob)
-                    {
                         break;
-                    }
-
-                    (int, int) overlap = secondJobEnumerate.Current.GetOverlap(minTSecondJob, maxTSecondJob);
 
                     // There is no overlap
-                    if (overlap == (-1, -1))
-                    {
+                    if (secondJobEnumerate.Current.GetOverlap(minTSecondJob, maxTSecondJob) is not var (tCurrentFirstJob, _))
                         continue;
-                    }
 
                     // The job can never start before the first job
-                    int tFirstJob = Math.Max(Math.Max(firstJob.Start, job.MinFirstIntervalStart), overlap.Item1 - job.MaxGapIntervalStarts);
-                    int tSecondJob = Math.Max(tFirstJob + job.MinGapIntervalStarts, overlap.Item1);
+                    int tFirstJob = Math.Max(Math.Max(firstJob.Start, job.MinFirstIntervalStart), tCurrentFirstJob - job.MaxGapIntervalStarts);
+                    int tSecondJob = Math.Max(tFirstJob + job.MinGapIntervalStarts, tCurrentFirstJob);
 
                     Console.WriteLine("---------------------------------");
                     Console.WriteLine($"First Job: {tFirstJob}, Second Job: {tSecondJob}");
@@ -108,7 +94,7 @@ namespace VaccinationScheduling.Shared.Machine
                 }
             }
 
-            return (-1, -1);
+            return null;
         }
 
         /// <summary>

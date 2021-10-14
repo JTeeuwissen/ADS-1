@@ -34,13 +34,11 @@ namespace VaccinationScheduling.Shared.Machine
         /// ret<0 This one predecends other
         /// ret>0 This one follows other
         /// </returns>
-        public (int, int) GetOverlap(int tStart, int tEnd)
+        public (int, int)? GetOverlap(int tStart, int tEnd)
         {
             // There is no overlap between the two
             if (Start > tEnd && tEnd != -1 || End < tStart && End != -1)
-            {
-                return (-1, -1);
-            }
+                return null;
 
             // There is overlapping range
             int minValue = Math.Min(End, tEnd);
