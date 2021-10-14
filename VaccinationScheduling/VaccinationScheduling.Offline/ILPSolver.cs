@@ -96,18 +96,45 @@ namespace VaccinationScheduling.Offline
                     constraint.SetCoefficient(J[i, (int)JabEnum.SecondJab, m, t], 1);
             }
 
-            // SUM(J_i_1_k_t', t<t'<=t+p1) + J_i_1_k_t >= 1 ∀i,k,t < t-p1
-            // Na een jab wordt er in het ziekenhuis geen nieuwe jab geplanned voor een gegeven periode
-            for (int i = 0; i < jobCount; i++)
+            // SUM(SUM(J_i_1_k_t', t<t'<=t+p1), 0 < i < i_max) + SUM(J_i_1_k_t, 0 < i < i_max) <= 1 ∀k,t < t-p1
+            // Na een jab 1 wordt er in het ziekenhuis geen nieuwe jab geplanned voor een gegeven periode
             for (int m = 0; m < machineCount; m++)
             for (int t = 0; t < maxTime - global.TFirstDose; t++)
             {
                 Constraint constraint = solver.MakeConstraint(0, 1, "No jabs for p1 after any first jab");
-                constraint.SetCoefficient(J[i, (int)JabEnum.FirstJab, m, t], 1);
+                for (int i = 0; i < jobCount; i++) 
+                    constraint.SetCoefficient(J[i, (int)JabEnum.FirstJab, m, t], 1);
 
-                for (int t1 = t; t1 < t + global.TFirstDose; t1++)
-                    for(int j = 0; j < JabCount; j++)
-                        constraint.SetCoefficient(J[i, j, m, t1], 1);
+                for (int i = 0; i < jobCount; i++) 
+                    for (int t1 = t; t1 < t + global.TFirstDose; t1++)
+                        for(int j = 0; j < JabCount; j++)
+                            constraint.SetCoefficient(J[i, j, m, t1], 1);
+            }
+
+            // SUM(SUM(J_i_2_k_t', t<t'<=t+p2), 0 < i < i_max) + SUM(J_i_2_k_t, 0 < i < i_max) <= 1 ∀k,t < t-p1
+            // Na een jab 2 wordt er in het ziekenhuis geen nieuwe jab geplanned voor een gegeven periode
+            for (int m = 0; m < machineCount; m++)
+            for (int t = 0; t < maxTime - global.TSecondDose; t++)
+            {
+                Constraint constraint = solver.MakeConstraint(0, 1, "No jabs for p2 after any second jab");
+                for (int i = 0; i < jobCount; i++)
+                    constraint.SetCoefficient(J[i, (int)JabEnum.SecondJab, m, t], 1);
+
+                for (int i = 0; i < jobCount; i++)
+                    for (int t1 = t; t1 < t + global.TSecondDose; t1++)
+                        for (int j = 0; j < JabCount; j++)
+                            constraint.SetCoefficient(J[i, j, m, t1], 1);
+            }
+
+            // SUM(J_i_2_k_t', 0 < i < i_max) = 0 ∀k, t_max-p2 < t < t_max
+            // Geen tweede jabs in de laatste p2 slots
+            for (int m = 0; m < machineCount; m++)
+            for (int t = maxTime- global.TSecondDose; t < maxTime; t++)
+            {
+                Constraint constraint = solver.MakeConstraint(0, 0, "No in last p2 time slots");
+
+                for (int i = 0; i < jobCount; i++)
+                    constraint.SetCoefficient(J[i, (int)JabEnum.SecondJab, m, t], 1);
             }
 
             // P1_i_t * (t - r_i) >= 0 ∀i,t
