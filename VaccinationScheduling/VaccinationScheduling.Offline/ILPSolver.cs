@@ -110,9 +110,8 @@ namespace VaccinationScheduling.Offline
             }
 
             // P1_i_t * t >= r_i ∀i,t
+            // P1_i_t * (t - r_i) >= 0 ∀i,t
             // Een eerste jab mag niet eerder dan aangegeven
-            // P1_i_t * t + p_1 <= d_i ∀i,t
-            // Een eerste jab mag niet later dan aangegeven
             for (int i = 0; i < jobCount; i++)
             for (int t = 0; t < maxTime; t++)
             {
@@ -147,6 +146,7 @@ namespace VaccinationScheduling.Offline
 
             //TODO werkt niet voor P2 = 0
             // P2_i_t * t >= SUM(SUM(J_i_2_k_t' * t', 0<t'<=max_t), 0<k<=k_max) + p_1 + g + l_i	∀i,t
+            // P2_i_t * (t - (p_1 + g + l_i) - max_t) >= SUM(SUM(J_i_2_k_t' * t', 0<t'<=max_t), 0<k<=k_max) - max_t ∀i,t
             // Een tweede jab start niet eerder dan mag
             for (int i = 0; i < jobCount; i++)
             for (int t = 0; t < maxTime; t++)
