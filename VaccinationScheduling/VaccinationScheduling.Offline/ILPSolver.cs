@@ -1,5 +1,4 @@
 ﻿using System;
-using System.Linq;
 using Google.OrTools.LinearSolver;
 using VaccinationScheduling.Shared;
 using static System.Double;
@@ -93,7 +92,7 @@ namespace VaccinationScheduling.Offline
                     constraint.SetCoefficient(J[i, (int)JabEnum.SecondJab, m, t], 1);
             }
 
-            // SUM(SUM(J_i_1_k_t', t<t'<=t+p1), 0 <= i < i_max) + SUM(J_i_1_k_t, 0 < i < i_max) <= 1 ∀k,t < max_t-p1
+            // SUM(SUM(J_i_1_k_t', t<t'<t+p1), 0 <= i < i_max) + SUM(J_i_1_k_t, 0 < i < i_max) <= 1 ∀k,t < max_t-p1
             // Na een jab 1 wordt er in het ziekenhuis geen nieuwe jab geplanned voor een gegeven periode
             for (int m = 0; m < mMax; m++)
             for (int t = 0; t < tMax - p1; t++)
@@ -104,12 +103,12 @@ namespace VaccinationScheduling.Offline
                     constraint.SetCoefficient(J[i, (int)JabEnum.FirstJab, m, t], 1);
 
                 for (int i = 0; i < iMax; i++)
-                for (int t1 = t + 1; t1 <= t + p1; t1++)
                 for (int j = 0; j < jabCount; j++)
+                for (int t1 = t + 1; t1 < t + p1; t1++)
                     constraint.SetCoefficient(J[i, j, m, t1], 1);
             }
 
-            // SUM(SUM(J_i_2_k_t', t<t'<=t+p2), 0 <= i < i_max) + SUM(J_i_2_k_t, 0 <= i < i_max) <= 1 ∀k,t < t-p1
+            // SUM(SUM(J_i_2_k_t', t<t'<t+p2), 0 <= i < i_max) + SUM(J_i_2_k_t, 0 <= i < i_max) <= 1 ∀k,t < t-p1
             // Na een jab 2 wordt er in het ziekenhuis geen nieuwe jab geplanned voor een gegeven periode
             for (int m = 0; m < mMax; m++)
             for (int t = 0; t < tMax - p2; t++)
@@ -120,8 +119,8 @@ namespace VaccinationScheduling.Offline
                     constraint.SetCoefficient(J[i, (int)JabEnum.SecondJab, m, t], 1);
 
                 for (int i = 0; i < iMax; i++)
-                for (int t1 = t + 1; t1 <= t + p2; t1++)
                 for (int j = 0; j < jabCount; j++)
+                for (int t1 = t + 1; t1 < t + p2; t1++)
                     constraint.SetCoefficient(J[i, j, m, t1], 1);
             }
 
@@ -141,32 +140,29 @@ namespace VaccinationScheduling.Offline
             for (int i = 0; i < iMax; i++)
             for (int t = 0; t < tMax; t++)
             {
-                Constraint constraint = solver.MakeConstraint(
-                    0,
-                    MaxValue,
-                    "Jab one not earlier or later than allowed."
-                );
+                Constraint constraint = solver.MakeConstraint(0, MaxValue, "Jab one not earlier than allowed.");
                 constraint.SetCoefficient(P[i, (int)JabEnum.FirstJab, t], t - (r[i] - 1));
             }
 
-            // P1_i_t * (t + p_1 - d_i) <= 0 ∀i,t
+            // TODO check this +1, 
+            // P1_i_t * (- t - p_1 + d_i + 1) >= 0 ∀i,t
             // Een eerste jab mag niet later dan aangegeven
             for (int i = 0; i < iMax; i++)
             for (int t = 0; t < tMax; t++)
             {
-                Constraint constraint = solver.MakeConstraint(MinValue, 0, "Jab one not later than allowed.");
-                constraint.SetCoefficient(P[i, (int)JabEnum.FirstJab, t], t - (d[i] - 1) + p1);
+                Constraint constraint = solver.MakeConstraint(0, MaxValue, "Jab one not later than allowed.");
+                constraint.SetCoefficient(P[i, (int)JabEnum.FirstJab, t], -t + d[i] - p1);
             }
 
-            // J_i_1_k_t <= P1_i_t 	∀i,k,t
+            // P1_i_t <= J_i_1_k_t	∀i,k,t
             // De eerste jab valt altijd in de gegeven time interval
             for (int i = 0; i < iMax; i++)
             for (int m = 0; m < mMax; m++)
             for (int t = 0; t < tMax; t++)
             {
-                Constraint constraint = solver.MakeConstraint(MinValue, 0, "First jab in allowed period");
-                constraint.SetCoefficient(P[i, (int)JabEnum.FirstJab, t], -1);
-                constraint.SetCoefficient(J[i, (int)JabEnum.FirstJab, m, t], 1);
+                Constraint constraint = solver.MakeConstraint(0, MaxValue, "First jab in allowed period");
+                constraint.SetCoefficient(P[i, (int)JabEnum.FirstJab, t], 1);
+                constraint.SetCoefficient(J[i, (int)JabEnum.FirstJab, m, t], -1);
             }
 
             // P2_i_t * (t - p_1 - g - x_i - max_t) >= SUM(SUM(J_i_1_k_t' * t', 0<=t'<max_t), 0<=k<k_max) - max_t ∀i,t
@@ -196,7 +192,7 @@ namespace VaccinationScheduling.Offline
 
                 for (int t1 = 0; t1 < tMax; t1++)
                 for (int m = 0; m < mMax; m++)
-                    constraint.SetCoefficient(J[i, (int)JabEnum.SecondJab, m, t1], -t1);
+                    constraint.SetCoefficient(J[i, (int)JabEnum.FirstJab, m, t1], -t1);
             }
 
             // J_i_2_k_t <= P2_i_t ∀i,k,t
