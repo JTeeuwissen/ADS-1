@@ -16,10 +16,8 @@ namespace VaccinationScheduling.Offline
             Schedule[] schedules = ILPSolver.Solve(global, jobs);
 
             foreach (Schedule schedule in schedules) Console.WriteLine(schedule);
-
-#if DEBUG
-            Console.WriteLine(SchedulePrettier.ToPrettyString(global, schedules));
-#endif
+            
+            Extensions.WriteDebugLine(SchedulePrettier.ToPrettyString(global, schedules));
 
             // TODO Sort jobs
             // TODO Schedule
