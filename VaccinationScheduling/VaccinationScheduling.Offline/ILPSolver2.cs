@@ -13,6 +13,10 @@ namespace VaccinationScheduling.Offline
             (int jabCount, int iMax, int mMax, int tMax, int[] r, int[] d, int[] x, int[] l) =
                 Constants.GetConstants(global, jobs);
 
+            int p1 = global.TimeFirstDose;
+            int p2 = global.TimeSecondDose;
+            int g = global.TimeGap;
+
             // Create the model
             CpModel model = new();
 
@@ -67,8 +71,7 @@ namespace VaccinationScheduling.Offline
             for (int j = 0; j < jabCount; j++)
             for (int t = 0; t < 1; t++)
             {
-                (int, int, int, int) key = (i, m, t, j);
-                model.Add(S[key] == 0);
+                model.Add(S[(i, m, t, j)] == 0);
             }
 
 
@@ -79,44 +82,33 @@ namespace VaccinationScheduling.Offline
                 (int, int) key1 = (i, 0);
                 (int, int) key2 = (i, 1);
                 model.Add(T[key1] >= r[i]);
-                model.Add(T[key1] <= d[i] - global.TimeFirstDose + 1);
+                model.Add(T[key1] <= d[i] - p1 + 1);
                 //model.Add(T[key2] == 10);
-                model.Add(T[key2] >= T[key1] + global.TimeFirstDose + global.TimeGap + x[i]);
-                model.Add(T[key2] <= T[key1] + global.TimeFirstDose + global.TimeGap + x[i] + l[i] - 1);
+                model.Add(T[key2] >= T[key1] + p1 + g + x[i]);
+                model.Add(T[key2] <= T[key1] + p1 + g + x[i] + l[i] - 1);
             }
 
             // Ieder patient moet exact op 1 ziekenhuis zijn jab krijgen
             for (int i = 0; i < iMax; i++)
+            for (int j = 0; j < jabCount; j++)
             {
-                for (int j = 0; j < jabCount; j++)
-                {
-                    IntVar[] acc = new IntVar[mMax];
-                    for (int m = 0; m < mMax; m++)
-                    {
-                        (int, int, int) key = (i, m, j);
-                        acc[m] = G[key];
-                    }
+                IntVar[] acc = new IntVar[mMax];
+                for (int m = 0; m < mMax; m++) acc[m] = G[(i, m, j)];
 
-                    model.Add(LinearExpr.Sum(acc) == 1);
-                }
+                model.Add(LinearExpr.Sum(acc) == 1);
             }
 
             // De time-slot lengte voor jab d wordt vervuld voor patient i
 
-            int[] doses = { global.TimeFirstDose, global.TimeSecondDose };
+            int[] doses = { p1, p2 };
             for (int i = 0; i < iMax; i++)
             for (int j = 0; j < jabCount; j++)
             for (int m = 0; m < mMax; m++)
             {
                 IntVar[] acc = new IntVar[tMax + 1];
-                for (int t = 0; t <= tMax; t++)
-                {
-                    (int, int, int, int) key1 = (i, m, t, j);
-                    acc[t] = S[key1];
-                }
+                for (int t = 0; t <= tMax; t++) acc[t] = S[(i, m, t, j)];
 
-                (int, int, int) key2 = (i, m, j);
-                model.Add(LinearExpr.Sum(acc) == doses[j] * G[key2]);
+                model.Add(LinearExpr.Sum(acc) == doses[j] * G[(i, m, j)]);
             }
 
 
@@ -127,10 +119,7 @@ namespace VaccinationScheduling.Offline
                 IntVar[] acc = new IntVar[iMax * jabCount];
                 for (int i = 0; i < iMax; i++)
                 for (int j = 0; j < jabCount; j++)
-                {
-                    (int, int, int, int) key = (i, m, t, j);
-                    acc[i * jabCount + j] = S[key];
-                }
+                    acc[i * jabCount + j] = S[(i, m, t, j)];
 
                 model.Add(LinearExpr.Sum(acc) <= 1);
             }
@@ -143,10 +132,7 @@ namespace VaccinationScheduling.Offline
                 IntVar[] acc = new IntVar[iMax * jabCount];
                 for (int i = 0; i < iMax; i++)
                 for (int j = 0; j < jabCount; j++)
-                {
-                    (int, int, int) key = (i, m, j);
-                    acc[i * jabCount + j] = G[key];
-                }
+                    acc[i * jabCount + j] = G[(i, m, j)];
 
                 model.Add(LinearExpr.Sum(acc) > 0).OnlyEnforceIf(A[m]);
                 model.Add(LinearExpr.Sum(acc) <= 0).OnlyEnforceIf(A[m].Not());
@@ -174,10 +160,7 @@ namespace VaccinationScheduling.Offline
                 IntVar[] acc = new IntVar[mMax * (tMax + 1)];
                 for (int m = 0; m < mMax; m++)
                 for (int t = 0; t <= tMax; t++)
-                {
-                    (int, int, int, int) key = (i, m, t, j);
-                    acc[m * tMax + t + m] = C[key];
-                }
+                    acc[m * tMax + t + m] = C[(i, m, t, j)];
 
                 model.Add(LinearExpr.Sum(acc) == 1);
             }
@@ -190,12 +173,9 @@ namespace VaccinationScheduling.Offline
                 for (int m = 0; m < mMax; m++)
                 for (int t = 0; t <= tMax; t++)
                 {
-                    (int, int, int, int) key1 = (i, m, t, j);
-                    exp[m * tMax + t + m] = LinearExpr.Prod(C[key1], t);
+                    exp[m * tMax + t + m] = LinearExpr.Prod(C[(i, m, t, j)], t);
                 }
-
-                (int, int) key2 = (i, j);
-                model.Add(LinearExpr.Sum(exp) == T[key2]);
+                model.Add(LinearExpr.Sum(exp) == T[(i, j)]);
             }
 
             model.Minimize(LinearExpr.Sum(A));
@@ -212,10 +192,7 @@ namespace VaccinationScheduling.Offline
 
                 for (int i = 0; i < iMax; i++)
                 for (int j = 0; j < jabCount; j++)
-                {
-                    (int, int) key = (i, j);
-                    Console.WriteLine($"C[{i},{j}] = " + solver.Value(T[key]));
-                }
+                    Console.WriteLine($"C[{i},{j}] = " + solver.Value(T[(i, j)]));
 
                 for (int i = 0; i < iMax; i++)
                 for (int j = 0; j < jabCount; j++)
