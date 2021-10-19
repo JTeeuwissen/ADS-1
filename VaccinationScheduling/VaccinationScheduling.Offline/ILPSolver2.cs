@@ -83,7 +83,7 @@ namespace VaccinationScheduling.Offline
                 model.Add(T[key1] <= d[i] - p1 + 1);
                 //model.Add(T[key2] == 10);
                 model.Add(T[key2] >= T[key1] + p1 + g + x[i]);
-                model.Add(T[key2] <= T[key1] + p1 + g + x[i] + l[i] - 1);
+                model.Add(T[key2] <= T[key1] + p1 + g + x[i] + l[i] - p2);
             }
 
             // Ieder patient moet exact op 1 ziekenhuis zijn jab krijgen
