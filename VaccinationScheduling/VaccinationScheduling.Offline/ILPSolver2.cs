@@ -70,9 +70,7 @@ namespace VaccinationScheduling.Offline
             for (int m = 0; m < mMax; m++)
             for (int j = 0; j < jabCount; j++)
             for (int t = 0; t < 1; t++)
-            {
                 model.Add(S[(i, m, t, j)] == 0);
-            }
 
 
             // Constraints
@@ -172,9 +170,8 @@ namespace VaccinationScheduling.Offline
                 LinearExpr[] exp = new LinearExpr[mMax * (tMax + 1)];
                 for (int m = 0; m < mMax; m++)
                 for (int t = 0; t <= tMax; t++)
-                {
                     exp[m * tMax + t + m] = LinearExpr.Prod(C[(i, m, t, j)], t);
-                }
+
                 model.Add(LinearExpr.Sum(exp) == T[(i, j)]);
             }
 
@@ -183,7 +180,7 @@ namespace VaccinationScheduling.Offline
             //solver.StringParameters = "search_branching:FIXED_SEARCH, enumerate_all_solutions:true";
             CpSolverStatus status = solver.Solve(model);
             Console.WriteLine($"Solve status: {status}");
-            
+
             // Print solution.
             // Check that the problem has a feasible solution.
             if (status is CpSolverStatus.Optimal or CpSolverStatus.Feasible)
@@ -206,6 +203,7 @@ namespace VaccinationScheduling.Offline
                         v.Append(solver.Value(C[key]).ToString());
                         f.Append(solver.Value(S[key]).ToString());
                     }
+
                     Console.WriteLine($"C[{i},{j},{d}] = " + v);
                     Console.WriteLine($"S[{i},{j},{d}] = " + f);
                 }
