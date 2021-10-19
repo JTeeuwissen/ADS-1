@@ -1,5 +1,5 @@
 ﻿using FsCheck;
-using VaccinationScheduling.Online.Machine;
+using VaccinationScheduling.Online.Tree;
 using Xunit;
 using VaccinationScheduling.Shared;
 
@@ -10,7 +10,7 @@ namespace VaccinationScheduling.Tests.Shared.Machine
         [Fact]
         public void TestScheduleJobInEmptyTreeAtStart()
         {
-            MachineSchedule ms = new(new Global(1, 2, 0));
+            Online.Machine ms = new(new Global(1, 2, 0));
             RedBlackTree firstTree = ms.freeRangesFirstJob;
             RedBlackTree secondTree = ms.freeRangesSecondJob;
 
@@ -28,7 +28,7 @@ namespace VaccinationScheduling.Tests.Shared.Machine
         [Fact]
         public void TestScheduleJobInEmptyTreeAfterStart()
         {
-            MachineSchedule ms = new(new Global(2, 3, 0));
+            Online.Machine ms = new(new Global(2, 3, 0));
             RedBlackTree firstTree = ms.freeRangesFirstJob;
             RedBlackTree secondTree = ms.freeRangesSecondJob;
 
@@ -46,7 +46,7 @@ namespace VaccinationScheduling.Tests.Shared.Machine
         [Fact]
         public void TestScheduleJobInEmptyTreeInMiddle()
         {
-            MachineSchedule ms = new(new Global(2, 3, 0));
+            Online.Machine ms = new(new Global(2, 3, 0));
             RedBlackTree firstTree = ms.freeRangesFirstJob;
             RedBlackTree secondTree = ms.freeRangesSecondJob;
 
@@ -64,7 +64,7 @@ namespace VaccinationScheduling.Tests.Shared.Machine
         [Fact]
         public void TestScheduleJobRemovesNodeAtStart()
         {
-            MachineSchedule ms = new(new Global(2, 3, 0));
+            Online.Machine ms = new(new Global(2, 3, 0));
             RedBlackTree firstTree = ms.freeRangesFirstJob;
             RedBlackTree secondTree = ms.freeRangesSecondJob;
 
@@ -80,7 +80,7 @@ namespace VaccinationScheduling.Tests.Shared.Machine
         [Fact]
         public void TestScheduleJobRemovesNodeInMiddle()
         {
-            MachineSchedule ms = new(new Global(2, 3, 0));
+            Online.Machine ms = new(new Global(2, 3, 0));
             RedBlackTree firstTree = ms.freeRangesFirstJob;
             RedBlackTree secondTree = ms.freeRangesSecondJob;
 
@@ -104,7 +104,7 @@ namespace VaccinationScheduling.Tests.Shared.Machine
         [Fact]
         public void TestScheduleJobAdjustsNodeInMiddle()
         {
-            MachineSchedule ms = new(new Global(2, 3, 0));
+            Online.Machine ms = new(new Global(2, 3, 0));
             RedBlackTree firstTree = ms.freeRangesFirstJob;
             RedBlackTree secondTree = ms.freeRangesSecondJob;
 
@@ -128,7 +128,7 @@ namespace VaccinationScheduling.Tests.Shared.Machine
         [Fact]
         public void TestScheduleMultipleJobs()
         {
-            MachineSchedule ms = new(new Global(2, 5, 0));
+            Online.Machine ms = new(new Global(2, 5, 0));
             RedBlackTree firstTree = ms.freeRangesFirstJob;
             RedBlackTree secondTree = ms.freeRangesSecondJob;
 
@@ -156,7 +156,7 @@ namespace VaccinationScheduling.Tests.Shared.Machine
         {
             Prop.ForAll(Arb.From(Gen.Choose(0, 7).Four()), valueTuple =>
             {
-                MachineSchedule ms = new(new Global(3, 5, 0));
+                Online.Machine ms = new(new Global(3, 5, 0));
 
                 int tFirstJob = valueTuple.Item1;
                 int tSecondJob = tFirstJob + 3 + valueTuple.Item2;

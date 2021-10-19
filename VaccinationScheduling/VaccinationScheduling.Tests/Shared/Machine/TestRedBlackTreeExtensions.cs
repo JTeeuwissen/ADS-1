@@ -1,10 +1,10 @@
 ﻿using System;
 using System.Linq;
 using FsCheck;
-using VaccinationScheduling.Online.Machine;
+using VaccinationScheduling.Online.Tree;
 using Xunit;
 using VaccinationScheduling.Shared;
-using Range = VaccinationScheduling.Online.Machine.Range;
+using Range = VaccinationScheduling.Online.Tree.Range;
 
 namespace VaccinationScheduling.Tests.Shared.Machine
 {
@@ -31,7 +31,7 @@ namespace VaccinationScheduling.Tests.Shared.Machine
                 Arb.From(Gen.Choose(0, 100).Two()),
                 valueTuple =>
                 {
-                    MachineSchedule ms = new(new Global(10, 5, 0));
+                    Online.Machine ms = new(new Global(10, 5, 0));
 
                     int tJob = valueTuple.Item1;
                     int tFind = valueTuple.Item2;
@@ -62,7 +62,7 @@ namespace VaccinationScheduling.Tests.Shared.Machine
                 Arb.From(Gen.Choose(0, 100).Two()),
                 valueTuple =>
                 {
-                    MachineSchedule ms = new(new Global(10, 5, 0));
+                    Online.Machine ms = new(new Global(10, 5, 0));
 
                     int tJob = valueTuple.Item1;
                     int tFind = valueTuple.Item2;
@@ -87,7 +87,7 @@ namespace VaccinationScheduling.Tests.Shared.Machine
                 Arb.From(Gen.Choose(3, 10).Four()),
                 valueTuple =>
                 {
-                    MachineSchedule ms = new(new Global(3, 5, 0));
+                    Online.Machine ms = new(new Global(3, 5, 0));
 
                     int tFirstJob = valueTuple.Item1;
                     int tSecondJob = tFirstJob + 3 + valueTuple.Item2;

@@ -1,4 +1,4 @@
-﻿using VaccinationScheduling.Online.Machine;
+﻿using VaccinationScheduling.Online.Tree;
 using Xunit;
 
 namespace VaccinationScheduling.Tests

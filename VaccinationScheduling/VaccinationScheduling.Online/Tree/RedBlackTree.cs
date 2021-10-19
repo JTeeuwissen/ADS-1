@@ -12,7 +12,7 @@ using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 
-namespace VaccinationScheduling.Online.Machine
+namespace VaccinationScheduling.Online.Tree
 {
     /// <summary>
     /// The base implementation for various collections classes that use Red-Black trees

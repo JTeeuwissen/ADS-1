@@ -1,5 +1,5 @@
-﻿using System.Collections.Generic;
-using VaccinationScheduling.Online.Machine;
+﻿using System;
+using System.Collections.Generic;
 using VaccinationScheduling.Shared;
 using static VaccinationScheduling.Shared.Extensions;
 
@@ -11,17 +11,19 @@ namespace VaccinationScheduling.Online
         {
             Global global = ReadUtils.ReadGlobal();
             JobEnumerable jobs = new(global);
-            List<MachineSchedule> schedules = new();
+            List<Machine> machines = new();
 
             foreach (Job job in jobs)
             {
                 // Returns whether a job was added.
                 bool ScheduleJob()
                 {
-                    foreach (MachineSchedule schedule in schedules)
+                    for (int machineIndex = 0; machineIndex < machines.Count; machineIndex++)
                     {
-                        if (schedule.FindGreedySpot(job) is not var (tFirstJob, tSecondJob)) continue;
-                        schedule.ScheduleJobs(tFirstJob, tSecondJob);
+                        Machine machine = machines[machineIndex];
+                        if (machine.FindGreedySpot(job) is not var (tFirstJob, tSecondJob)) continue;
+                        Console.WriteLine(new Schedule(tFirstJob, machineIndex, tSecondJob, machineIndex));
+                        machine.ScheduleJobs(tFirstJob, tSecondJob);
                         return true;
                     }
 
@@ -32,14 +34,13 @@ namespace VaccinationScheduling.Online
 
                 WriteDebugLine("No free spot found, adding a new machine");
 
-                schedules.Add(new MachineSchedule(global));
-                schedules[^1].ScheduleJobs(
+                machines.Add(new Machine(global));
+                machines[^1].ScheduleJobs(
                     job.MinFirstIntervalStart,
                     job.MinFirstIntervalStart + job.MinGapIntervalStarts
                 );
+                Console.WriteLine(new Schedule(job.MinFirstIntervalStart, machines.Count, job.MinFirstIntervalStart + job.MinGapIntervalStarts, machines.Count));
             }
-
-            WriteDebugLine($"Solution has {schedules.Count} number of machines");
         }
     }
 }

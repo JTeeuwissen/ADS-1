@@ -10,7 +10,7 @@
 
 using System.Diagnostics;
 
-namespace VaccinationScheduling.Online.Machine
+namespace VaccinationScheduling.Online.Tree
 {
     /// <summary>
     /// The class that is each node in the red-black tree.

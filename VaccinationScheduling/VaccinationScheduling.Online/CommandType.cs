@@ -1,4 +1,4 @@
-﻿namespace VaccinationScheduling.Online.Machine
+﻿namespace VaccinationScheduling.Online
 {
     public enum CommandType
     {

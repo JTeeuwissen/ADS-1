@@ -2,7 +2,7 @@
 using System.Diagnostics.CodeAnalysis;
 using System.Text;
 
-namespace VaccinationScheduling.Online.Machine
+namespace VaccinationScheduling.Online.Tree
 {
     public partial class RedBlackTree : IEnumerable<Range>
     {

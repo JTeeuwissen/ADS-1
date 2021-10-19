@@ -59,10 +59,10 @@ namespace VaccinationScheduling.Shared
 
             // DO NOT USE THESE VARIABLES
             // Only for later verification of the answer
-            this.FirstIntervalStart = firstIntervalStart;
-            this.FirstIntervalEnd = firstIntervalEnd;
-            this.SecondIntervalLength = secondIntervalLength;
-            this.ExtraDelay = extraDelay;
+            FirstIntervalStart = firstIntervalStart;
+            FirstIntervalEnd = firstIntervalEnd;
+            SecondIntervalLength = secondIntervalLength;
+            ExtraDelay = extraDelay;
         }
 
         /// <summary>
