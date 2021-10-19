@@ -124,7 +124,7 @@ namespace VaccinationScheduling.Offline
 
 
             // Zieken huis j wordt gebruikt als het minstens 1 jab heeft
-            // ??
+
             for (int m = 0; m < mMax; m++)
             {
                 IntVar[] acc = new IntVar[iMax * jabCount];
@@ -203,13 +203,43 @@ namespace VaccinationScheduling.Offline
                         v.Append(solver.Value(C[key]).ToString());
                         f.Append(solver.Value(S[key]).ToString());
                     }
-
-                    Console.WriteLine($"C[{i},{j},{d}] = " + v);
-                    Console.WriteLine($"S[{i},{j},{d}] = " + f);
+                    Console.WriteLine($"C[{i},{j},{m}] = " + v);
+                    Console.WriteLine($"S[{i},{j},{m}] = " + f);
                 }
             }
 
+            (int t1, int t2) GetJabTime(int i)
+            {
+                int t1 = (int)solver.Value(T[(i,0)]);
+                int t2 = (int)solver.Value(T[(i,1)]);
+
+                return (t1, t2);
+            }
+
+            (int m1, int m2) GetJabMachine(int i)
+            {
+                int m1 = -1;
+                int m2 = -1;
+                for (int m = 0; m < mMax; m++)
+                {
+                    if (solver.Value(G[(i, m, 0)]) == 1)
+                        m1 = m;
+                    if (solver.Value(G[(i, m, 1)]) == 1)
+                        m2 = m;
+                }
+                return (m1, m2);
+            }
+
             Schedule[] schedules = new Schedule[iMax];
+
+            for (int i = 0; i < iMax; i++)
+            {
+                (int t1, int t2) = GetJabTime(i);
+                (int m1, int m2) = GetJabMachine(i);
+
+                schedules[i] = new Schedule(t1, m1, t2, m2);
+            }
+
             return schedules;
         }
     }
