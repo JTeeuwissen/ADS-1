@@ -2,6 +2,7 @@
 using Google.OrTools.Sat;
 using VaccinationScheduling.Shared;
 using System.Collections.Generic;
+using System.Text;
 
 namespace VaccinationScheduling.Offline
 {
@@ -9,7 +10,7 @@ namespace VaccinationScheduling.Offline
     {
         public static Schedule[] Solve(Global global, Job[] jobs)
         {
-            (int jabCount, int iMax, int mMax, int tMax, int[]? r, int[]? d, int[]? x, int[]? l) =
+            (int jabCount, int iMax, int mMax, int tMax, int[] r, int[] d, int[] x, int[] l) =
                 Constants.GetConstants(global, jobs);
 
             // Create the model
@@ -20,7 +21,6 @@ namespace VaccinationScheduling.Offline
             // T[i,j] is an array of numeric integer variables,
             // which determines the start time of patient i's jab of dose d.
             Dictionary<(int, int), IntVar> T = new();
-
             for (int i = 0; i < iMax; i++)
             for (int j = 0; j < jabCount; j++)
                 T.Add((i, j), model.NewIntVar(0, tMax, $"T_{i}_{j}"));
@@ -30,7 +30,6 @@ namespace VaccinationScheduling.Offline
             // if patient i takes timeslot t in hospital j for dose d
             // ReSharper disable once InconsistentNaming
             Dictionary<(int, int, int, int), IntVar> S = new();
-
             for (int i = 0; i < iMax; i++)
             for (int m = 0; m < mMax; m++)
             for (int t = 0; t <= tMax; t++)
@@ -56,7 +55,6 @@ namespace VaccinationScheduling.Offline
             // C[i,m,t,j] is an array of booleans, determining consecutive elements for patient i for dose d
             // ReSharper disable once InconsistentNaming
             Dictionary<(int, int, int, int), IntVar> C = new();
-
             for (int i = 0; i < iMax; i++)
             for (int m = 0; m < mMax; m++)
             for (int t = 0; t <= tMax; t++)
@@ -75,7 +73,6 @@ namespace VaccinationScheduling.Offline
 
 
             // Constraints
-
             // De eerste en de tweede jab valt altijd in de gegeven time interval
             for (int i = 0; i < iMax; i++)
             {
@@ -206,13 +203,12 @@ namespace VaccinationScheduling.Offline
             //solver.StringParameters = "search_branching:FIXED_SEARCH, enumerate_all_solutions:true";
             CpSolverStatus status = solver.Solve(model);
             Console.WriteLine($"Solve status: {status}");
-
+            
             // Print solution.
             // Check that the problem has a feasible solution.
-            if (status == CpSolverStatus.Optimal || status == CpSolverStatus.Feasible)
+            if (status is CpSolverStatus.Optimal or CpSolverStatus.Feasible)
             {
                 Console.WriteLine($"Total cost: {solver.ObjectiveValue}\n");
-
 
                 for (int i = 0; i < iMax; i++)
                 for (int j = 0; j < jabCount; j++)
@@ -221,22 +217,20 @@ namespace VaccinationScheduling.Offline
                     Console.WriteLine($"C[{i},{j}] = " + solver.Value(T[key]));
                 }
 
-
                 for (int i = 0; i < iMax; i++)
                 for (int j = 0; j < jabCount; j++)
                 for (int m = 0; m < mMax; m++)
                 {
-                    //TODO stringbuilder.
-                    string v = "";
-                    string f = "";
+                    StringBuilder v = new();
+                    StringBuilder f = new();
                     for (int t = 0; t <= tMax; t++)
                     {
                         (int, int, int, int) key = (i, m, t, j);
-                        v += solver.Value(C[key]).ToString();
-                        f += solver.Value(S[key]).ToString();
+                        v.Append(solver.Value(C[key]).ToString());
+                        f.Append(solver.Value(S[key]).ToString());
                     }
-                    //Console.WriteLine($"C[{i},{j},{d}] = " + v);
-                    //Console.WriteLine($"S[{i},{j},{d}] = " + f);
+                    Console.WriteLine($"C[{i},{j},{d}] = " + v);
+                    Console.WriteLine($"S[{i},{j},{d}] = " + f);
                 }
             }
 
