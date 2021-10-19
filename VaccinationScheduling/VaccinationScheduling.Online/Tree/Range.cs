@@ -12,7 +12,7 @@ namespace VaccinationScheduling.Online.Tree
         /// <summary>
         /// End time
         /// </summary>
-        public int End;
+        public int? EndMaybe;
 
         /// <summary>
         /// Create a range object. The range is where there is no job.
@@ -22,31 +22,22 @@ namespace VaccinationScheduling.Online.Tree
         public Range(int start, int end)
         {
             Start = start;
-            End = end;
+            EndMaybe = end;
         }
 
-        /// <summary>
-        /// Implements IComparable interface, makes timeslots comparable.
-        /// </summary>
-        /// <param name="other">other timeslot object to compare to</param>
-        /// <returns>
-        /// ret==0 Are equal
-        /// ret<0 This one predecends other
-        /// ret>0 This one follows other
-        /// </returns>
+
         public (int, int)? GetOverlap(int tStart, int tEnd)
         {
-            // There is no overlap between the two
-            if (Start > tEnd && tEnd != -1 || End < tStart && End != -1)
-                return null;
+            // Check for overlap
+            bool overlap = (EndMaybe == null || tStart < EndMaybe) && Start < tEnd;
+            if (!overlap) return null;
 
             // There is overlapping range
-            int minValue = Math.Min(End, tEnd);
-            return (Math.Max(Start, tStart), minValue != -1 ? minValue : Math.Max(End, tEnd));
+            return (Math.Max(Start, tStart), EndMaybe is {} end ? Math.Min(end, tEnd) : tEnd);
         }
 
         /// <summary>
-        /// Implements IComparable interface, makes timpeslots comparable.
+        /// Implements IComparable interface, makes time slots comparable.
         /// </summary>
         /// <param name="other">other timeslot object to compare to</param>
         /// <returns>
@@ -58,13 +49,13 @@ namespace VaccinationScheduling.Online.Tree
         {
             // Compare on properties in this order:
             // (10, 20) >= (0, 1)
-            if (Start > other.End && other.End != -1)
+            if (other.EndMaybe != null && Start > other.EndMaybe)
             {
                 return 1;
             }
 
             // (0, 1) <= (10, 20)
-            if (End < other.Start && End != -1)
+            if (EndMaybe != null && other.Start > EndMaybe)
             {
                 return -1;
             }
@@ -89,13 +80,7 @@ namespace VaccinationScheduling.Online.Tree
                 return 1;
             }
 
-            // 0 At the end means there is no end to the range, aka infinity.
-            if (End == -1)
-            {
-                return 0;
-            }
-
-            if (End < time)
+            if (EndMaybe < time)
             {
                 return -1;
             }
@@ -109,11 +94,7 @@ namespace VaccinationScheduling.Online.Tree
         /// <returns>Object in string format</returns>
         public override string ToString()
         {
-            if (End == -1)
-            {
-                return $"({Start},INFINITY)";
-            }
-            return $"({Start},{End})";
+            return EndMaybe == null ? $"({Start},INFINITY)" : $"({Start},{EndMaybe})";
         }
     }
 }

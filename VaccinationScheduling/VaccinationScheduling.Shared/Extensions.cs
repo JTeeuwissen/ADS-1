@@ -4,7 +4,12 @@ namespace VaccinationScheduling.Shared
 {
     public static class Extensions
     {
-        public static void WriteDebugLine(string value)
+        public static void WriteDebugLine(object? value)
+        {
+            WriteDebugLine(value?.ToString());
+        }
+
+        public static void WriteDebugLine(string? value)
         {
 #if DEBUG
             ConsoleColor currentColor = Console.ForegroundColor;

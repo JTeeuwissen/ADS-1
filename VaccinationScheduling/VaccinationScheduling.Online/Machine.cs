@@ -45,7 +45,7 @@ namespace VaccinationScheduling.Online
             {
                 Range firstJob = firstJobEnumerate.Current;
                 int minTSecondJob = Math.Max(firstJobEnumerate.Current.Start, job.MinFirstIntervalStart) + job.MinGapIntervalStarts;
-                int maxTSecondJob = Math.Min(firstJobEnumerate.Current.End, job.MaxFirstIntervalStart + job.MaxGapIntervalStarts);
+                int maxTSecondJob = Math.Min(firstJobEnumerate.Current.EndMaybe, job.MaxFirstIntervalStart + job.MaxGapIntervalStarts);
 
                 // Go through current
                 for (int i = slidingWindowIndex; i < secondRanges.Count; i++)
@@ -65,10 +65,10 @@ namespace VaccinationScheduling.Online
                     int tFirstJob = Math.Max(Math.Max(firstJob.Start, job.MinFirstIntervalStart), tCurrentFirstJob - job.MaxGapIntervalStarts);
                     int tSecondJob = Math.Max(tFirstJob + job.MinGapIntervalStarts, tCurrentFirstJob);
 
-                    Console.WriteLine("---------------------------------");
-                    Console.WriteLine($"First Job: {tFirstJob}, Second Job: {tSecondJob}");
-                    Console.WriteLine(freeRangesFirstJob);
-                    Console.WriteLine(freeRangesSecondJob);
+                    Extensions.WriteDebugLine("---------------------------------");
+                    Extensions.WriteDebugLine($"First Job: {tFirstJob}, Second Job: {tSecondJob}");
+                    Extensions.WriteDebugLine(freeRangesFirstJob);
+                    Extensions.WriteDebugLine(freeRangesSecondJob);
 
                     return (tFirstJob, tSecondJob);
                 }
@@ -88,10 +88,10 @@ namespace VaccinationScheduling.Online
                     int tFirstJob = Math.Max(Math.Max(firstJob.Start, job.MinFirstIntervalStart), tCurrentFirstJob - job.MaxGapIntervalStarts);
                     int tSecondJob = Math.Max(tFirstJob + job.MinGapIntervalStarts, tCurrentFirstJob);
 
-                    Console.WriteLine("---------------------------------");
-                    Console.WriteLine($"First Job: {tFirstJob}, Second Job: {tSecondJob}");
-                    Console.WriteLine(freeRangesFirstJob);
-                    Console.WriteLine(freeRangesSecondJob);
+                    Extensions.WriteDebugLine("---------------------------------");
+                    Extensions.WriteDebugLine($"First Job: {tFirstJob}, Second Job: {tSecondJob}");
+                    Extensions.WriteDebugLine(freeRangesFirstJob);
+                    Extensions.WriteDebugLine(freeRangesSecondJob);
 
                     return (tFirstJob, tSecondJob);
                 }
@@ -134,9 +134,9 @@ namespace VaccinationScheduling.Online
             ScheduleJob(freeRangesFirstJob, tSecondJob, freeRangesSecondJob.JobLength);
             ScheduleJob(freeRangesSecondJob, tFirstJob, freeRangesFirstJob.JobLength);
 
-            Console.WriteLine("Added to both trees!");
-            Console.WriteLine(freeRangesFirstJob);
-            Console.WriteLine(freeRangesSecondJob);
+            Extensions.WriteDebugLine("Added to both trees!");
+            Extensions.WriteDebugLine(freeRangesFirstJob);
+            Extensions.WriteDebugLine(freeRangesSecondJob);
         }
 
         /// <summary>
@@ -162,17 +162,17 @@ namespace VaccinationScheduling.Online
         /// <param name="jobLength">Length of the job</param>
         public static void ScheduleJob(RedBlackTree tree, Range foundRange, int tJob, int jobLength)
         {
-            // When the second value is -1. It represents 'infinite'
-            bool infiniteRange = foundRange.End == -1;
+            // When the second value is null. It represents 'infinite'
+            bool infiniteRange = foundRange.EndMaybe == null;
 
             // Job adjusts the start of the range
             if (foundRange.Start + tree.JobLength > tJob)
             {
                 // The new range would be negative, so delete it instead
-                if (foundRange.End < tJob + jobLength && !infiniteRange)
+                if (foundRange.EndMaybe < tJob + jobLength && !infiniteRange)
                 {
                     bool res = tree.Delete(foundRange, false, out foundRange);
-                    Console.WriteLine("Deleted item");
+                    Extensions.WriteDebugLine("Deleted item");
                     //Debug.Assert(res);
                 }
                 else
@@ -182,26 +182,26 @@ namespace VaccinationScheduling.Online
                 }
             }
             // Only need to adapt the end of the range
-            else if (foundRange.End - jobLength < tJob && !infiniteRange)
+            else if (foundRange.EndMaybe - jobLength < tJob && !infiniteRange)
             {
                 // The new range would be negative, so delete it instead
                 if (tJob - tree.JobLength < foundRange.Start)
                 {
                     bool res = tree.Delete(foundRange, false, out foundRange);
                     //Debug.Assert(res);
-                    Console.WriteLine("Deleted item");
+                    Extensions.WriteDebugLine("Deleted item");
                 }
                 else
                 {
                     // Define new end of the range
-                    foundRange.End = Math.Min(tJob - tree.JobLength, foundRange.End);
+                    foundRange.EndMaybe = Math.Min(tJob - tree.JobLength, foundRange.EndMaybe);
                 }
             }
             // It hovers somewhere in the middle, so we need to insert another item
             else
             {
-                int newRangeEnd = foundRange.End;
-                foundRange.End = tJob - tree.JobLength;
+                int newRangeEnd = foundRange.EndMaybe;
+                foundRange.EndMaybe = tJob - tree.JobLength;
                 tree.Insert(new Range(tJob + jobLength, newRangeEnd));
             }
         }

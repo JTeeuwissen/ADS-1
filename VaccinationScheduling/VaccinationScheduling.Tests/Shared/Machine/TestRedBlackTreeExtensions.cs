@@ -42,15 +42,15 @@ namespace VaccinationScheduling.Tests.Shared.Machine
                     // Searching below the range
                     if (tFind <= tJob - 10)
                     {
-                        return range.Start == 0 && range.End == tJob - 10;
+                        return range.Start == 0 && range.EndMaybe == tJob - 10;
                     }
 
                     if (tFind >= tJob + 10)
                     {
-                        return range.Start == tJob + 10 && range.End == -1;
+                        return range.Start == tJob + 10 && range.EndMaybe == -1;
                     }
 
-                    return range.Start == -1 && range.End == -1;
+                    return range.Start == -1 && range.EndMaybe == -1;
                 }
             ).QuickCheckThrowOnFailure();
         }
@@ -72,8 +72,8 @@ namespace VaccinationScheduling.Tests.Shared.Machine
 
                     // Searching below the range
                     return tFind < tJob + 10
-                        ? range.Start == 0 && range.End == tJob - 10
-                        : range.Start == tJob + 10 && range.End == -1;
+                        ? range.Start == 0 && range.EndMaybe == tJob - 10
+                        : range.Start == tJob + 10 && range.EndMaybe == -1;
                 }
             ).QuickCheckThrowOnFailure();
         }
@@ -107,7 +107,7 @@ namespace VaccinationScheduling.Tests.Shared.Machine
 
                     // Searching below the range
                     return ms.freeRangesFirstJob.EnumerateRange(minValue, maxValue).All(
-                        r => (r.Start <= maxValue || maxValue == -1) && (r.End >= minValue || r.End == -1)
+                        r => (r.Start <= maxValue || maxValue == -1) && (r.EndMaybe >= minValue || r.EndMaybe == -1)
                     );
                 }
             ).QuickCheckThrowOnFailure();

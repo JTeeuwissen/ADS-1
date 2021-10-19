@@ -446,7 +446,7 @@ namespace VaccinationScheduling.Online.Tree
             foreach (Range range in EnumerateRange(0, -1))
             {
                 sb.Append(range);
-                if (range.End != -1) sb.Append("->");
+                if (range.EndMaybe != -1) sb.Append("->");
             }
 
             return sb.ToString();
