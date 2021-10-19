@@ -1,4 +1,5 @@
-﻿using Xunit;
+﻿using VaccinationScheduling.Online.Tree;
+using Xunit;
 
 namespace VaccinationScheduling.Tests
 {
@@ -7,7 +8,7 @@ namespace VaccinationScheduling.Tests
         [Fact]
         public void TestCompareRangeOfLength1WithInt()
         {
-            VaccinationScheduling.Shared.Machine.Range length1 = new(1, 1);
+            Range length1 = new(1, 1);
             Assert.True(length1.CompareTo(2) <= -1);
             Assert.True(length1.CompareTo(1) == 0);
             Assert.True(length1.CompareTo(0) >= 1);
@@ -16,7 +17,7 @@ namespace VaccinationScheduling.Tests
         [Fact]
         public void TestCompareRangeLength5WithInt()
         {
-            VaccinationScheduling.Shared.Machine.Range range = new(0, 5);
+            Range range = new(0, 5);
             Assert.True(range.CompareTo(-1) >= 1);
             Assert.True(range.CompareTo(0)  == 0);
             Assert.True(range.CompareTo(2)  == 0);
@@ -27,7 +28,7 @@ namespace VaccinationScheduling.Tests
         [Fact]
         public void TestCompareInfiniteRangeWithInt()
         {
-            VaccinationScheduling.Shared.Machine.Range rangeInf = new(0, -1);
+            Range rangeInf = new(0, -1);
             Assert.True(rangeInf.CompareTo(-1) >= 1);
             Assert.True(rangeInf.CompareTo(0) == 0);
             Assert.True(rangeInf.CompareTo(1) == 0);
@@ -36,8 +37,8 @@ namespace VaccinationScheduling.Tests
         [Fact]
         public void TestCompareEqualRanges()
         {
-            VaccinationScheduling.Shared.Machine.Range range1 = new(1, 5);
-            VaccinationScheduling.Shared.Machine.Range range2 = new(1, 5);
+            Range range1 = new(1, 5);
+            Range range2 = new(1, 5);
 
             Assert.True(range1.CompareTo(range2) == 0);
             Assert.Equal(range1.CompareTo(range2), range2.CompareTo(range1));
@@ -46,8 +47,8 @@ namespace VaccinationScheduling.Tests
         [Fact]
         public void TestCompareNonOverlappingRanges()
         {
-            VaccinationScheduling.Shared.Machine.Range lowerRange = new(0, 5);
-            VaccinationScheduling.Shared.Machine.Range higherRange = new(6, 10);
+            Range lowerRange = new(0, 5);
+            Range higherRange = new(6, 10);
 
             Assert.True(lowerRange.CompareTo(higherRange) <= -1);
             Assert.True(higherRange.CompareTo(lowerRange) >= 1);
@@ -56,13 +57,13 @@ namespace VaccinationScheduling.Tests
         [Fact]
         public void TestCompareOverlappingRanges()
         {
-            VaccinationScheduling.Shared.Machine.Range range1 = new(1, 5);
-            VaccinationScheduling.Shared.Machine.Range range2 = new(2, 5);
+            Range range1 = new(1, 5);
+            Range range2 = new(2, 5);
 
             Assert.True(range1.CompareTo(range2) == 0);
             Assert.True(range2.CompareTo(range1) == 0);
 
-            VaccinationScheduling.Shared.Machine.Range range3 = new(1, 6);
+            Range range3 = new(1, 6);
             Assert.True(range2.CompareTo(range3) == 0);
             Assert.True(range3.CompareTo(range2) == 0);
         }
@@ -70,8 +71,8 @@ namespace VaccinationScheduling.Tests
         [Fact]
         public void TestCompareWithInfiniteRange()
         {
-            VaccinationScheduling.Shared.Machine.Range infiniteRange = new(0, -1);
-            VaccinationScheduling.Shared.Machine.Range otherRange = new(1, 2);
+            Range infiniteRange = new(0, -1);
+            Range otherRange = new(1, 2);
 
             Assert.True(infiniteRange.CompareTo(otherRange) == 0);
             Assert.True(otherRange.CompareTo(infiniteRange) == 0);

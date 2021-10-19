@@ -14,7 +14,7 @@ namespace VaccinationScheduling.Offline
             // ReSharper disable once InlineTemporaryVariable
             int machineCount = jobCount;
             int maxTime = jobs.Select(job => job.FirstIntervalEnd + job.ExtraDelay + job.SecondIntervalLength).Max() +
-                          global.TGap;
+                          global.TimeGap;
 
             (int FirstIntervalStart, int FirstIntervalEnd)[] firstFeasibleIntervals =
                 jobs.Select(job => (job.FirstIntervalStart, job.FirstIntervalEnd)).ToArray();
@@ -67,14 +67,14 @@ namespace VaccinationScheduling.Offline
             for (int i = 0; i < jobCount; i++)
             {
                 model.Add(T[i, 0] >= firstFeasibleIntervals[i].FirstIntervalStart);
-                model.Add(T[i, 0] <= firstFeasibleIntervals[i].FirstIntervalEnd - global.TFirstDose + 1);
+                model.Add(T[i, 0] <= firstFeasibleIntervals[i].FirstIntervalEnd - global.TimeFirstDose + 1);
 
-                model.Add(T[i, 1] >= T[i, 0] + global.TFirstDose + global.TGap + patientDelays[i]);
-                model.Add(T[i, 1] <= T[i, 0] + global.TFirstDose + global.TGap + patientDelays[i] + secondIntervalLengths[i] - 1);
+                model.Add(T[i, 1] >= T[i, 0] + global.TimeFirstDose + global.TimeGap + patientDelays[i]);
+                model.Add(T[i, 1] <= T[i, 0] + global.TimeFirstDose + global.TimeGap + patientDelays[i] + secondIntervalLengths[i] - 1);
             }
 
             // Iedere patiënt krijgt exact 1 jab per dose
-            int[] doses = new int[] { global.TFirstDose, global.TSecondDose };
+            int[] doses = new int[] { global.TimeFirstDose, global.TimeSecondDose };
             for (int i = 0; i < jobCount; i++)
             {
                 for (int d = 0; d < JabCount; d++)

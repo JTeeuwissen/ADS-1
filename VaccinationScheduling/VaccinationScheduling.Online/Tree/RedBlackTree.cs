@@ -9,10 +9,10 @@
 // License link: https://www.nuget.org/packages/SoftUni.Wintellect.PowerCollections/2.0.0
 
 using System;
-using System.Diagnostics;
 using System.Collections.Generic;
+using System.Diagnostics;
 
-namespace VaccinationScheduling.Shared.Machine
+namespace VaccinationScheduling.Online.Tree
 {
     /// <summary>
     /// The base implementation for various collections classes that use Red-Black trees

@@ -1,6 +1,6 @@
 ﻿using System;
 
-namespace VaccinationScheduling.Shared.Machine
+namespace VaccinationScheduling.Online.Tree
 {
     public class Range : IComparable<int>, IComparable<Range>
     {
@@ -26,7 +26,7 @@ namespace VaccinationScheduling.Shared.Machine
         }
 
         /// <summary>
-        /// Implements IComparable interface, makes timpeslots comparable.
+        /// Implements IComparable interface, makes timeslots comparable.
         /// </summary>
         /// <param name="other">other timeslot object to compare to</param>
         /// <returns>

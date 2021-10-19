@@ -53,16 +53,16 @@ namespace VaccinationScheduling.Shared
         )
         {
             MinFirstIntervalStart = firstIntervalStart;
-            MaxFirstIntervalStart = firstIntervalEnd - global.TFirstDose + 1;
-            MinGapIntervalStarts = global.TGap + extraDelay + global.TFirstDose;
-            MaxGapIntervalStarts = MinGapIntervalStarts + secondIntervalLength - global.TSecondDose;
+            MaxFirstIntervalStart = firstIntervalEnd - global.TimeFirstDose + 1;
+            MinGapIntervalStarts = global.TimeGap + extraDelay + global.TimeFirstDose;
+            MaxGapIntervalStarts = MinGapIntervalStarts + secondIntervalLength - global.TimeSecondDose;
 
             // DO NOT USE THESE VARIABLES
             // Only for later verification of the answer
-            this.FirstIntervalStart = firstIntervalStart;
-            this.FirstIntervalEnd = firstIntervalEnd;
-            this.SecondIntervalLength = secondIntervalLength;
-            this.ExtraDelay = extraDelay;
+            FirstIntervalStart = firstIntervalStart;
+            FirstIntervalEnd = firstIntervalEnd;
+            SecondIntervalLength = secondIntervalLength;
+            ExtraDelay = extraDelay;
         }
 
         /// <summary>

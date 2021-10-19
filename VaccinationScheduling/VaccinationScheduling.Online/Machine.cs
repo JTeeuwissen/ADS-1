@@ -1,9 +1,12 @@
 ﻿using System;
 using System.Collections.Generic;
+using VaccinationScheduling.Online.Tree;
+using VaccinationScheduling.Shared;
+using Range = VaccinationScheduling.Online.Tree.Range;
 
-namespace VaccinationScheduling.Shared.Machine
+namespace VaccinationScheduling.Online
 {
-    public class MachineSchedule
+    public class Machine
     {
         /// <summary>
         /// RedBlackTree containing the ranges at which there are free spots to START a first job.
@@ -16,13 +19,13 @@ namespace VaccinationScheduling.Shared.Machine
         public RedBlackTree freeRangesSecondJob;
 
         /// <summary>
-        /// Create a machinsechdule
+        /// Create a machine schedule
         /// </summary>
         /// <param name="global">Global parameters of the program</param>
-        public MachineSchedule(Global global)
+        public Machine(Global global)
         {
-            freeRangesFirstJob = new RedBlackTree(global.TFirstDose);
-            freeRangesSecondJob = new RedBlackTree(global.TSecondDose);
+            freeRangesFirstJob = new RedBlackTree(global.TimeFirstDose);
+            freeRangesSecondJob = new RedBlackTree(global.TimeSecondDose);
         }
 
         // Finds the first available spot inside the range.
@@ -107,11 +110,9 @@ namespace VaccinationScheduling.Shared.Machine
             // The two jobs cannot overlap
             //Debug.Assert(tFirstJob + freeRangesFirstJob.JobLength <= tSecondJob);
 
-            Range firstJob, secondJob;
-
             // Find the ranges at which the jobs are scheduled
-            freeRangesFirstJob.Find(tFirstJob, out firstJob);
-            freeRangesSecondJob.Find(tSecondJob, out secondJob);
+            freeRangesFirstJob.Find(tFirstJob, out Range firstJob);
+            freeRangesSecondJob.Find(tSecondJob, out Range secondJob);
 
             ScheduleJobs(tFirstJob, firstJob, tSecondJob, secondJob);
         }

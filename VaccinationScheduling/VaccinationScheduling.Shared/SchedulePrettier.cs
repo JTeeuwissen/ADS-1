@@ -28,7 +28,7 @@ namespace VaccinationScheduling.Shared
                 foreach ((var schedule, int index) in jab1Hospital)
                 {
                     string job = $"Job {index + 1}";
-                    string line = ToLine(schedule.T1, global.TFirstDose);
+                    string line = ToLine(schedule.T1, global.TimeFirstDose);
                     stringBuilder.AppendLine($"{job.Pad()}{line}");
                 }
             }
@@ -45,7 +45,7 @@ namespace VaccinationScheduling.Shared
                 foreach ((var schedule, int index) in jab2Hospital)
                 {
                     string job = $"Job {index + 1}";
-                    string line = ToLine(schedule.T2, global.TSecondDose);
+                    string line = ToLine(schedule.T2, global.TimeSecondDose);
                     stringBuilder.AppendLine($"{job.Pad()}{line}");
                 }
             }
