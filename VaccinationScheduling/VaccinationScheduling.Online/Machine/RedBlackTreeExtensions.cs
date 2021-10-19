@@ -1,8 +1,8 @@
 ﻿using System.Collections.Generic;
-using System.Text;
 using System.Diagnostics.CodeAnalysis;
+using System.Text;
 
-namespace VaccinationScheduling.Shared.Machine
+namespace VaccinationScheduling.Online.Machine
 {
     public partial class RedBlackTree : IEnumerable<Range>
     {

@@ -1,6 +1,6 @@
 ﻿using System;
 
-namespace VaccinationScheduling.Shared.Machine
+namespace VaccinationScheduling.Online.Machine
 {
     public class Range : IComparable<int>, IComparable<Range>
     {

@@ -1,6 +1,6 @@
-﻿using Xunit;
+﻿using VaccinationScheduling.Online.Machine;
+using Xunit;
 using VaccinationScheduling.Shared;
-using VaccinationScheduling.Shared.Machine;
 
 namespace VaccinationScheduling.Tests
 {

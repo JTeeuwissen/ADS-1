@@ -1,7 +1,6 @@
 ﻿using System.Collections.Generic;
-using System.Linq;
+using VaccinationScheduling.Online.Machine;
 using VaccinationScheduling.Shared;
-using VaccinationScheduling.Shared.Machine;
 using static VaccinationScheduling.Shared.Extensions;
 
 namespace VaccinationScheduling.Online

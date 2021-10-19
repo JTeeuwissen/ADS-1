@@ -13,14 +13,14 @@ namespace VaccinationScheduling.Offline
     {
         public static Schedule[] Solve(Global global, Job[] jobs)
         {
-            int adjustedTFirstJab = global.TFirstDose - 1;
-            int adjustedTSecondJab = global.TSecondDose - 1;
+            int adjustedTFirstJab = global.TimeFirstDose - 1;
+            int adjustedTSecondJab = global.TimeSecondDose - 1;
 
             int jobCount = jobs.Length;
             // ReSharper disable once InlineTemporaryVariable
             int machineCount = jobCount;
             int maxTime = jobs.Select(job => job.FirstIntervalEnd + job.ExtraDelay + job.SecondIntervalLength).Max() +
-                          global.TGap;
+                          global.TimeGap;
 
             (int FirstIntervalStart, int FirstIntervalEnd)[] firstFeasibleIntervals =
                 jobs.Select(job => (job.FirstIntervalStart, job.FirstIntervalEnd)).ToArray();
@@ -183,7 +183,7 @@ namespace VaccinationScheduling.Offline
                     MaxValue,
                     "Second jab not earlier than allowed"
                 );
-                constraint.SetCoefficient(P2[i, t], t - (adjustedTFirstJab + global.TGap + patientDelays[i]) - maxTime);
+                constraint.SetCoefficient(P2[i, t], t - (adjustedTFirstJab + global.TimeGap + patientDelays[i]) - maxTime);
 
                 for (int t1 = 0; t1 < maxTime; t1++)
                 for (int m = 0; m < machineCount; m++)
@@ -195,7 +195,7 @@ namespace VaccinationScheduling.Offline
             for (int i = 0; i < jobCount; i++)
             for (int t = 0; t < maxTime; t++)
             {
-                Constraint constraint = solver.MakeConstraint(MinValue, adjustedTFirstJab + global.TGap + patientDelays[i] + secondIntervalLengths[i], "Second jab not later than allowed");
+                Constraint constraint = solver.MakeConstraint(MinValue, adjustedTFirstJab + global.TimeGap + patientDelays[i] + secondIntervalLengths[i], "Second jab not later than allowed");
                 constraint.SetCoefficient(
                     P2[i, t],
                     t + adjustedTSecondJab

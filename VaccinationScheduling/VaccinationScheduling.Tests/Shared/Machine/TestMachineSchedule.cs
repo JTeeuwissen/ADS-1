@@ -1,7 +1,7 @@
 ﻿using FsCheck;
+using VaccinationScheduling.Online.Machine;
 using Xunit;
 using VaccinationScheduling.Shared;
-using VaccinationScheduling.Shared.Machine;
 
 namespace VaccinationScheduling.Tests.Shared.Machine
 {
@@ -88,7 +88,7 @@ namespace VaccinationScheduling.Tests.Shared.Machine
             ms.ScheduleJob(firstTree, 2, 2);
             ms.ScheduleJob(firstTree, 6, 2);
 
-            // Insert job that sits flush inbetween
+            // Insert job that sits flush in between
             ms.ScheduleJob(firstTree, 4, 2);
             Assert.Equal("(0,0)->(8,INFINITY)", firstTree.ToString());
 
@@ -112,7 +112,7 @@ namespace VaccinationScheduling.Tests.Shared.Machine
             ms.ScheduleJob(firstTree, 2, 2);
             ms.ScheduleJob(firstTree, 8, 2);
 
-            // Insert job that sits flush inbetween
+            // Insert job that sits flush in between
             ms.ScheduleJob(firstTree, 6, 2);
             Assert.Equal("(0,0)->(4,4)->(10,INFINITY)", firstTree.ToString());
 
@@ -154,12 +154,9 @@ namespace VaccinationScheduling.Tests.Shared.Machine
         [Fact]
         public void TestMultipleSchedules()
         {
-            VaccinationScheduling.Shared.Machine.Range range = new(0, 0);
-            System.Random random = new System.Random();
-
             Prop.ForAll(Arb.From(Gen.Choose(0, 7).Four()), valueTuple =>
             {
-                MachineSchedule ms = new MachineSchedule(new Global(3, 5, 0));
+                MachineSchedule ms = new(new Global(3, 5, 0));
 
                 int tFirstJob = valueTuple.Item1;
                 int tSecondJob = tFirstJob + 3 + valueTuple.Item2;

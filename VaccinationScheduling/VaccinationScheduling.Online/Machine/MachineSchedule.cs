@@ -1,7 +1,8 @@
 ﻿using System;
 using System.Collections.Generic;
+using VaccinationScheduling.Shared;
 
-namespace VaccinationScheduling.Shared.Machine
+namespace VaccinationScheduling.Online.Machine
 {
     public class MachineSchedule
     {
@@ -16,13 +17,13 @@ namespace VaccinationScheduling.Shared.Machine
         public RedBlackTree freeRangesSecondJob;
 
         /// <summary>
-        /// Create a machinsechdule
+        /// Create a machine schedule
         /// </summary>
         /// <param name="global">Global parameters of the program</param>
         public MachineSchedule(Global global)
         {
-            freeRangesFirstJob = new RedBlackTree(global.TFirstDose);
-            freeRangesSecondJob = new RedBlackTree(global.TSecondDose);
+            freeRangesFirstJob = new RedBlackTree(global.TimeFirstDose);
+            freeRangesSecondJob = new RedBlackTree(global.TimeSecondDose);
         }
 
         // Finds the first available spot inside the range.
