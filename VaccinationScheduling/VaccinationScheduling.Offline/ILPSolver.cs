@@ -1,5 +1,4 @@
 ﻿using System;
-using System.Linq;
 using Google.OrTools.LinearSolver;
 using VaccinationScheduling.Shared;
 using static System.Double;
@@ -13,21 +12,11 @@ namespace VaccinationScheduling.Offline
     {
         public static Schedule[] Solve(Global global, Job[] jobs)
         {
-            const int jabCount = 2;
-            int iMax = jobs.Length;
-            // ReSharper disable once InlineTemporaryVariable
-            int mMax = iMax;
-            int tMax = jobs.Select(job => job.FirstIntervalEnd + job.ExtraDelay + job.SecondIntervalLength).Max() +
-                          global.TimeGap;
+            (int jabCount, int iMax, int mMax, int tMax, int[]? r, int[]? d, int[]? x, int[]? l) = Constants.GetConstants(global, jobs);
 
             int p1 = global.TimeFirstDose - 1;
             int p2 = global.TimeSecondDose - 1;
             int g = global.TimeGap;
-
-            int[] r = jobs.Select(job => job.FirstIntervalStart).ToArray();
-            int[] d = jobs.Select(job => job.FirstIntervalEnd).ToArray();
-            int[] x = jobs.Select(job => job.ExtraDelay).ToArray();
-            int[] l = jobs.Select(job => job.SecondIntervalLength).ToArray();
 
             // Create the linear solver with the SCIP backend.
             Solver solver = Solver.CreateSolver("SCIP");
