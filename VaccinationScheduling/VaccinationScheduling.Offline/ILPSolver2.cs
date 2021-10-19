@@ -17,7 +17,7 @@ namespace VaccinationScheduling.Offline
 
             // Create the variables
 
-            // T[i,d] is an array of numeric integer variables,
+            // T[i,j] is an array of numeric integer variables,
             // which determines the start time of patient i's jab of dose d.
             Dictionary<(int, int), IntVar> T = new();
 
@@ -26,7 +26,7 @@ namespace VaccinationScheduling.Offline
                 T.Add((i, j), model.NewIntVar(0, tMax, $"T_{i}_{j}"));
 
 
-            // S[i,j,t,d] is an 3D array of booleans, which will be set to true
+            // S[i,m,t,j] is an 3D array of booleans, which will be set to true
             // if patient i takes timeslot t in hospital j for dose d
             // ReSharper disable once InconsistentNaming
             Dictionary<(int, int, int, int), IntVar> S = new();
@@ -37,7 +37,7 @@ namespace VaccinationScheduling.Offline
             for (int j = 0; j < jabCount; j++)
                 S.Add((i, m, t, j), model.NewBoolVar($"S_{i}_{m}_{t}_{j}"));
 
-            // G[i, j, d] is an array of booleans, which will be set to true if patient i
+            // G[i, m, j] is an array of booleans, which will be set to true if patient i
             // uses hospital j for dose d,
             // ReSharper disable once InconsistentNaming
             Dictionary<(int, int, int), IntVar> G = new();
@@ -46,14 +46,14 @@ namespace VaccinationScheduling.Offline
             for (int j = 0; j < jabCount; j++)
                 G.Add((i, m, j), model.NewBoolVar($"G_{i}_{m}_{j}"));
 
-            // Hospital A[j] is used
+            // Hospital A[m] is used
             // ReSharper disable once InconsistentNaming
             IntVar[] A = new IntVar[mMax];
             for (int m = 0; m < mMax; m++)
                 A[m] = model.NewBoolVar($"A_{m}");
 
 
-            // C[i,j, t,d] is an array of booleans, determining consecutive elements for patient i for dose d
+            // C[i,m,t,j] is an array of booleans, determining consecutive elements for patient i for dose d
             // ReSharper disable once InconsistentNaming
             Dictionary<(int, int, int, int), IntVar> C = new();
 
@@ -186,8 +186,6 @@ namespace VaccinationScheduling.Offline
             }
 
             // Consecutive constraint 3, jab starts at specified time for person i for jab d
-
-
             for (int i = 0; i < iMax; i++)
             for (int j = 0; j < jabCount; j++)
             {
@@ -228,6 +226,7 @@ namespace VaccinationScheduling.Offline
                 for (int j = 0; j < jabCount; j++)
                 for (int m = 0; m < mMax; m++)
                 {
+                    //TODO stringbuilder.
                     string v = "";
                     string f = "";
                     for (int t = 0; t <= tMax; t++)
