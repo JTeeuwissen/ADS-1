@@ -136,8 +136,7 @@ namespace VaccinationScheduling.Online.Tree
         /// <returns>Enumerable that can be used in a foreach loop</returns>
         public IEnumerable<Range> FastEnumerateRange(int first, int last)
         {
-            RangeTester rangeTester = DoubleBoundedRangeTester(first, last);
-            return FastEnumerateRangeInOrder(rangeTester, root);
+            return FastEnumerateRangeInOrder(first, last, root);
         }
 
         /// <summary>
@@ -218,22 +217,21 @@ namespace VaccinationScheduling.Online.Tree
         /// <param name="node">Node to begin enumeration. May be null.</param>
         /// <returns>An enumerable of the items.</returns>
         /// <exception cref="InvalidOperationException">The tree has an item added or deleted during the enumeration.</exception>
-        private IEnumerable<Range> FastEnumerateRangeInOrder(RangeTester rangeTester, Node root)
+        private IEnumerable<Range> FastEnumerateRangeInOrder(int first, int last, Node root)
         {
             Stack<(CommandType, Node)> stack = new Stack<(CommandType, Node)>();
+            RangeTester rangeTester = DoubleBoundedRangeTester(first, last);
             Node current = root;
             int compare = 1;
 
             // Find the highest parent that overlaps with the range
             while (current != null)
             {
-                compare = rangeTester(current.item);
-
-                if (compare > 0)
+                if (current.item.CompareTo(last) > 0)
                 {
                     current = current.left;
                 }
-                else if (compare < 0)
+                else if (current.item.CompareTo(first) < 0)
                 {
                     current = current.right;
                 }
@@ -268,7 +266,7 @@ namespace VaccinationScheduling.Online.Tree
                     yield return current.item;
                 }
                 // We need to expand to get the next item
-                else
+                else if(commandType == CommandType.ExpandAndYield)
                 {
                     if (current.right != null)
                     {
@@ -280,12 +278,11 @@ namespace VaccinationScheduling.Online.Tree
                         // Right item is not too small
                         else if (compare < 0)
                         {
-                            stack.Push((CommandType.Expand, current.right));
+                            stack.Push((CommandType.ExpandLeft, current.right));
                         }
                     }
 
-                    if (commandType == CommandType.ExpandAndYield)
-                        stack.Push((CommandType.Yield, current));
+                    stack.Push((CommandType.Yield, current));
 
                     if (current.left != null)
                     {
@@ -298,7 +295,35 @@ namespace VaccinationScheduling.Online.Tree
                         else if (compare > 0)
                         {
                             // We still want to check
-                            stack.Push((CommandType.Expand, current.left));
+                            stack.Push((CommandType.ExpandRight, current.left));
+                        }
+                    }
+                }
+                else if(commandType == CommandType.ExpandRight)
+                {
+                    if(current.right != null)
+                    {
+                        if(current.right.item.CompareTo(first) < 0)
+                        {
+                            stack.Push((CommandType.ExpandRight, current.right));
+                        }
+                        else
+                        {
+                            stack.Push((CommandType.ExpandAndYield, current.right));
+                        }
+                    }
+                }
+                else
+                {
+                    if(current.left != null)
+                    {
+                        if(current.left.item.CompareTo(last) > 0)
+                        {
+                            stack.Push((CommandType.ExpandLeft, current.left));
+                        }
+                        else
+                        {
+                            stack.Push((CommandType.ExpandAndYield, current.left));
                         }
                     }
                 }

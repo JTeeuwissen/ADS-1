@@ -2,7 +2,8 @@
 {
     public enum CommandType
     {
-        Expand,
+        ExpandRight,
+        ExpandLeft,
         ExpandAndYield,
         Yield
     }
