@@ -20,7 +20,7 @@ namespace VaccinationScheduling.Offline
             int g = global.TimeGap;
 
             // Create the linear solver with the SCIP backend.
-            Solver solver = Solver.CreateSolver("SCIP");
+            Solver solver = Solver.CreateSolver("SAT");
 
             // Variable J[i,j,m,t] is 1 if jab j of job i is scheduled on machine m in timeslot t and 0 otherwise
             // ReSharper disable once InconsistentNaming
@@ -133,17 +133,6 @@ namespace VaccinationScheduling.Offline
                 }
             }
 
-            // SUM(J_i_2_k_t', 0 <= i < i_max) = 0 ∀k, t_max-p2 < t < t_max
-            // Geen tweede jabs in de laatste p2 slots
-            for (int m = 0; m < mMax; m++)
-            for (int t = tMax - p2 + 1; t < tMax; t++)
-            {
-                Constraint constraint = solver.MakeConstraint(0, 0, "No in last p2 time slots");
-
-                for (int i = 0; i < iMax; i++)
-                    constraint.SetCoefficient(J[i, (int)JabEnum.SecondJab, m, t], 1);
-            }
-
             // J_i_1_k_t = 0	∀i,k, t in [1..r_i] ∪ [(d_i-p1)..t_max] 
             // De eerste jab valt altijd in de gegeven time interval
             for (int i = 0; i < iMax; i++)
@@ -180,7 +169,7 @@ namespace VaccinationScheduling.Offline
                 );
                 constraint.SetCoefficient(P2[i, t], t + p2);
 
-                for (int t1 = 0; t1 < tMax; t1++)
+                for (int t1 = 0; t1 < t; t1++)
                 for (int m = 0; m < mMax; m++)
                     constraint.SetCoefficient(J[i, (int)JabEnum.FirstJab, m, t1], -t1);
             }
@@ -191,7 +180,7 @@ namespace VaccinationScheduling.Offline
             for (int m = 0; m < mMax; m++)
             for (int t = 0; t < tMax; t++)
             {
-                Constraint constraint = solver.MakeConstraint(MinValue, 0, "Second jab in allowed period");
+                Constraint constraint = solver.MakeConstraint(-1, 0, "Second jab in allowed period");
                 constraint.SetCoefficient(P2[i, t], -1);
                 constraint.SetCoefficient(J[i, (int)JabEnum.SecondJab, m, t], 1);
             }
@@ -210,21 +199,7 @@ namespace VaccinationScheduling.Offline
 
             Extensions.WriteDebugLine("Solution:");
             Extensions.WriteDebugLine("Objective value = " + solver.Objective().Value());
-
-            //for (int i = 0; i < iMax; i++)
-            //for (int j = 0; j < jabCount; j++)
-            //for (int m = 0; m < mMax; m++)
-            //for (int t = 0; t < tMax; t++)
-            //    Extensions.WriteDebugLine($"J_{i}_{j}_{m}_{t} {J[i, j, m, t].SolutionValue()}");
             
-            //for (int i = 0; i < iMax; i++)
-            //    for (int t = 0; t < tMax; t++)
-            //        Extensions.WriteDebugLine($"P2_{i}_{t} {P[i, (int)JabEnum.SecondJab, t].SolutionValue()}");
-
-            //for (int k = 0; k < mMax; k++)
-            //    Extensions.WriteDebugLine($"M_{k} {M[k].SolutionValue()}");
-
-
             Schedule[] schedules = new Schedule[iMax];
 
             (int m, int t) GetJab(int i, JabEnum j)
@@ -236,7 +211,6 @@ namespace VaccinationScheduling.Offline
                         return (m + 1, t + 1);
                 throw new Exception($"Jab {j} from job {i} is missing");
             }
-
 
             for (int i = 0; i < iMax; i++)
             {
