@@ -179,17 +179,17 @@ namespace VaccinationScheduling.Offline
             CpSolver solver = new();
             //solver.StringParameters = "search_branching:FIXED_SEARCH, enumerate_all_solutions:true";
             CpSolverStatus status = solver.Solve(model);
-            Console.WriteLine($"Solve status: {status}");
+            Extensions.WriteDebugLine($"Solve status: {status}");
 
             // Print solution.
             // Check that the problem has a feasible solution.
             if (status is CpSolverStatus.Optimal or CpSolverStatus.Feasible)
             {
-                Console.WriteLine($"Total cost: {solver.ObjectiveValue}\n");
+                Extensions.WriteDebugLine($"Total cost: {solver.ObjectiveValue}\n");
 
                 for (int i = 0; i < iMax; i++)
                 for (int j = 0; j < jabCount; j++)
-                    Console.WriteLine($"C[{i},{j}] = " + solver.Value(T[(i, j)]));
+                    Extensions.WriteDebugLine($"C[{i},{j}] = " + solver.Value(T[(i, j)]));
 
                 for (int i = 0; i < iMax; i++)
                 for (int j = 0; j < jabCount; j++)
@@ -203,8 +203,8 @@ namespace VaccinationScheduling.Offline
                         v.Append(solver.Value(C[key]).ToString());
                         f.Append(solver.Value(S[key]).ToString());
                     }
-                    Console.WriteLine($"C[{i},{j},{m}] = " + v);
-                    Console.WriteLine($"S[{i},{j},{m}] = " + f);
+                    Extensions.WriteDebugLine($"C[{i},{j},{m}] = " + v);
+                    Extensions.WriteDebugLine($"S[{i},{j},{m}] = " + f);
                 }
             }
 
@@ -218,8 +218,8 @@ namespace VaccinationScheduling.Offline
 
             (int m1, int m2) GetJabMachine(int i)
             {
-                int m1 = -1;
-                int m2 = -1;
+                int? m1 = null;
+                int? m2 = null;
                 for (int m = 0; m < mMax; m++)
                 {
                     if (solver.Value(G[(i, m, 0)]) == 1)
@@ -227,7 +227,7 @@ namespace VaccinationScheduling.Offline
                     if (solver.Value(G[(i, m, 1)]) == 1)
                         m2 = m;
                 }
-                return (m1, m2);
+                return ((int)m1!, (int)m2!);
             }
 
             Schedule[] schedules = new Schedule[iMax];

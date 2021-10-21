@@ -60,7 +60,7 @@ namespace VaccinationScheduling.Shared
         /// <param name="length">The jab length.</param>
         /// <returns>A pretty string.</returns>
         private static string ToLine(int timeslot, int length) =>
-            $"{new string(' ', timeslot - 1)}{(length == 1 ? "║" : $"╠{new string('═', length - 2)}╣")}";
+            $"|{new string(' ', timeslot - 1)}{(length == 1 ? "║" : $"╠{new string('═', length - 2)}╣")}";
 
         /// <summary>
         /// Pad the string for a total length.

@@ -97,15 +97,16 @@ namespace VaccinationScheduling.Offline
             for (int m = 0; m < mMax; m++)
             for (int t = 0; t < tMax - p1; t++)
             {
-                Constraint constraint = solver.MakeConstraint(0, 1, "No jabs for p1 after any first jab");
+                Constraint constraint = solver.MakeConstraint(0, tMax, "No jabs for p1 after any first jab");
 
                 for (int i = 0; i < iMax; i++)
-                    constraint.SetCoefficient(J[i, (int)JabEnum.FirstJab, m, t], 1);
+                {
+                    constraint.SetCoefficient(J[i, (int)JabEnum.FirstJab, m, t], tMax);
 
-                for (int i = 0; i < iMax; i++)
-                for (int j = 0; j < jabCount; j++)
-                for (int t1 = t + 1; t1 < t + p1; t1++)
-                    constraint.SetCoefficient(J[i, j, m, t1], 1);
+                    for (int j = 0; j < jabCount; j++)
+                    for (int t1 = t + 1; t1 < t + p1; t1++)
+                        constraint.SetCoefficient(J[i, j, m, t1], 1);
+                }
             }
 
             // SUM(SUM(J_i_2_k_t', t<t'<t+p2), 0 <= i < i_max) + SUM(J_i_2_k_t, 0 <= i < i_max) <= 1 ∀k,t < t-p1
@@ -113,15 +114,16 @@ namespace VaccinationScheduling.Offline
             for (int m = 0; m < mMax; m++)
             for (int t = 0; t < tMax - p2; t++)
             {
-                Constraint constraint = solver.MakeConstraint(0, 1, "No jabs for p2 after any second jab");
+                Constraint constraint = solver.MakeConstraint(0, tMax, "No jabs for p2 after any second jab");
 
                 for (int i = 0; i < iMax; i++)
-                    constraint.SetCoefficient(J[i, (int)JabEnum.SecondJab, m, t], 1);
+                {
+                    constraint.SetCoefficient(J[i, (int)JabEnum.SecondJab, m, t], tMax);
 
-                for (int i = 0; i < iMax; i++)
-                for (int j = 0; j < jabCount; j++)
-                for (int t1 = t + 1; t1 < t + p2; t1++)
-                    constraint.SetCoefficient(J[i, j, m, t1], 1);
+                    for (int j = 0; j < jabCount; j++)
+                    for (int t1 = t + 1; t1 < t + p2; t1++)
+                        constraint.SetCoefficient(J[i, j, m, t1], 1);
+                }
             }
 
             // SUM(J_i_2_k_t', 0 <= i < i_max) = 0 ∀k, t_max-p2 < t < t_max
@@ -144,7 +146,6 @@ namespace VaccinationScheduling.Offline
                 constraint.SetCoefficient(P[i, (int)JabEnum.FirstJab, t], t - (r[i] - 1));
             }
 
-            // TODO check this +1, 
             // P1_i_t * (- t - p_1 + d_i + 1) >= 0 ∀i,t
             // Een eerste jab mag niet later dan aangegeven
             for (int i = 0; i < iMax; i++)
@@ -172,14 +173,14 @@ namespace VaccinationScheduling.Offline
             {
                 Constraint constraint = solver.MakeConstraint(-tMax, MaxValue, "Second jab not earlier than allowed");
                 constraint.SetCoefficient(P[i, (int)JabEnum.SecondJab, t], t - p1 - g - x[i] - tMax);
-
+                //                                                                - 2  - 1 - 3    - 
                 for (int t1 = 0; t1 < tMax; t1++)
-                for (int m = 0; m < mMax; m++)
+                for (int m = 0; m < mMax; m++)//                                  -4
                     constraint.SetCoefficient(J[i, (int)JabEnum.FirstJab, m, t1], -t1);
             }
 
             // P2_i_t * (t + p_2) <= SUM(SUM(J_i_2_k_t' * t', 0<=t'<max_t), 0<=k<k_max) + p_1 + g + x_i + l_i ∀i,t
-            // Een tweede jab start niet later dan mag
+            // Een tweede jab eindigt niet later dan mag
             for (int i = 0; i < iMax; i++)
             for (int t = 0; t < tMax; t++)
             {
@@ -228,12 +229,12 @@ namespace VaccinationScheduling.Offline
             //    Extensions.WriteDebugLine($"J_{i}_{j}_{m}_{t} {J[i, j, m, t].SolutionValue()}");
 
             //for (int i = 0; i < iMax; i++)
-            //for (int t = 0; t < tMax; t++)
-            //    Extensions.WriteDebugLine($"P1_{i}_{t} {P[i, (int)JabEnum.FirstJab, t].SolutionValue()}");
+            //    for (int t = 0; t < tMax; t++)
+            //        Extensions.WriteDebugLine($"P1_{i}_{t} {P[i, (int)JabEnum.FirstJab, t].SolutionValue()}");
 
             //for (int i = 0; i < iMax; i++)
-            //for (int t = 0; t < tMax; t++)
-            //    Extensions.WriteDebugLine($"P2_{i}_{t} {P[i, (int)JabEnum.SecondJab, t].SolutionValue()}");
+            //    for (int t = 0; t < tMax; t++)
+            //        Extensions.WriteDebugLine($"P2_{i}_{t} {P[i, (int)JabEnum.SecondJab, t].SolutionValue()}");
 
             //for (int k = 0; k < mMax; k++)
             //    Extensions.WriteDebugLine($"M_{k} {M[k].SolutionValue()}");
