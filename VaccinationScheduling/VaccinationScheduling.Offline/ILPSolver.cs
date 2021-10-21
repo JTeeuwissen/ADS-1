@@ -92,16 +92,16 @@ namespace VaccinationScheduling.Offline
                     constraint.SetCoefficient(J[i, (int)JabEnum.SecondJab, m, t], 1);
             }
 
-            // SUM(SUM(SUM(J_i_1_m_t', 0<=j<2), t<t'<t+p1) + J_i_1_m_t * tMax, 0 <= i < i_max) <= tMax ∀m,t < max_t-p1
+            // SUM(SUM(SUM(J_i_1_m_t', 0<=j<2), t<t'<t+p1) + J_i_1_m_t * (i_max * 2 * (p1-1)), 0 <= i < i_max) <= (i_max * 2 * (p1-1)) ∀m,t < max_t-p1
             // Na een jab 1 wordt er in het ziekenhuis geen nieuwe jab geplanned voor een gegeven periode
             for (int m = 0; m < mMax; m++)
             for (int t = 0; t < tMax - p1; t++)
             {
-                Constraint constraint = solver.MakeConstraint(0, tMax, "No jabs for p1 after any first jab");
+                Constraint constraint = solver.MakeConstraint(0, iMax * jabCount * (p1 - 1), "No jabs for p1 after any first jab");
 
                 for (int i = 0; i < iMax; i++)
                 {
-                    constraint.SetCoefficient(J[i, (int)JabEnum.FirstJab, m, t], tMax);
+                    constraint.SetCoefficient(J[i, (int)JabEnum.FirstJab, m, t], iMax * jabCount * (p1 - 1));
 
                     for (int j = 0; j < jabCount; j++)
                     for (int t1 = t + 1; t1 < t + p1; t1++)
@@ -109,16 +109,16 @@ namespace VaccinationScheduling.Offline
                 }
             }
 
-            // SUM(SUM(SUM(J_i_2_m_t', 0<=j<2), t<t'<t+p2) + J_i_2_m_t * tMax, 0 <= i < i_max) <= tMax ∀m,t < t-p2
+            // SUM(SUM(SUM(J_i_2_m_t', 0<=j<2), t<t'<t+p2) + J_i_2_m_t * (i_max * 2 * (p2-1)), 0 <= i < i_max) <= (i_max * 2 * (p2-1)) ∀m,t < t-p2
             // Na een jab 2 wordt er in het ziekenhuis geen nieuwe jab geplanned voor een gegeven periode
             for (int m = 0; m < mMax; m++)
             for (int t = 0; t < tMax - p2; t++)
             {
-                Constraint constraint = solver.MakeConstraint(0, tMax, "No jabs for p2 after any second jab");
+                Constraint constraint = solver.MakeConstraint(0, iMax * jabCount * (p2 - 1), "No jabs for p2 after any second jab");
 
                 for (int i = 0; i < iMax; i++)
                 {
-                    constraint.SetCoefficient(J[i, (int)JabEnum.SecondJab, m, t], tMax);
+                    constraint.SetCoefficient(J[i, (int)JabEnum.SecondJab, m, t], iMax * jabCount * (p2 - 1));
 
                     for (int j = 0; j < jabCount; j++)
                     for (int t1 = t + 1; t1 < t + p2; t1++)
