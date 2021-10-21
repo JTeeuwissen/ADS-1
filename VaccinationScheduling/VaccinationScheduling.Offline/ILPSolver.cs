@@ -144,8 +144,7 @@ namespace VaccinationScheduling.Offline
                     constraint.SetCoefficient(J[i, (int)JabEnum.SecondJab, m, t], 1);
             }
 
-            // TODO reformulate
-            // P1_i_t <= J_i_1_k_t	∀i,k,t
+            // J_i_1_k_t = 0	∀i,k, t in [1..r_i] ∪ [(d_i-p1)..t_max] 
             // De eerste jab valt altijd in de gegeven time interval
             for (int i = 0; i < iMax; i++)
             for (int m = 0; m < mMax; m++)
