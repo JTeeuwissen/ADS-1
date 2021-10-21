@@ -92,7 +92,7 @@ namespace VaccinationScheduling.Offline
                     constraint.SetCoefficient(J[i, (int)JabEnum.SecondJab, m, t], 1);
             }
 
-            // SUM(SUM(J_i_1_k_t', t<t'<t+p1), 0 <= i < i_max) + SUM(J_i_1_k_t, 0 < i < i_max) <= 1 ∀k,t < max_t-p1
+            // SUM(SUM(SUM(J_i_1_m_t', 0<=j<2), t<t'<t+p1) + J_i_1_m_t * tMax, 0 <= i < i_max) <= tMax ∀m,t < max_t-p1
             // Na een jab 1 wordt er in het ziekenhuis geen nieuwe jab geplanned voor een gegeven periode
             for (int m = 0; m < mMax; m++)
             for (int t = 0; t < tMax - p1; t++)
@@ -109,7 +109,7 @@ namespace VaccinationScheduling.Offline
                 }
             }
 
-            // SUM(SUM(J_i_2_k_t', t<t'<t+p2), 0 <= i < i_max) + SUM(J_i_2_k_t, 0 <= i < i_max) <= 1 ∀k,t < t-p1
+            // SUM(SUM(SUM(J_i_2_m_t', 0<=j<2), t<t'<t+p2) + J_i_2_m_t * tMax, 0 <= i < i_max) <= tMax ∀m,t < t-p2
             // Na een jab 2 wordt er in het ziekenhuis geen nieuwe jab geplanned voor een gegeven periode
             for (int m = 0; m < mMax; m++)
             for (int t = 0; t < tMax - p2; t++)
