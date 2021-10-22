@@ -1,4 +1,4 @@
-﻿using VaccinationScheduling.Online.Tree;
+﻿/*using VaccinationScheduling.Online.Tree;
 using Xunit;
 
 namespace VaccinationScheduling.Tests.Shared.Machine
@@ -154,3 +154,4 @@ namespace VaccinationScheduling.Tests.Shared.Machine
         }
     }
 }
+*/

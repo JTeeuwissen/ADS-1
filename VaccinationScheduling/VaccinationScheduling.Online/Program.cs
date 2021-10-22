@@ -2,6 +2,8 @@
 using System.Collections.Generic;
 using VaccinationScheduling.Shared;
 using static VaccinationScheduling.Shared.Extensions;
+using VaccinationScheduling.Online.Tree;
+using VaccinationScheduling.Online.List;
 
 namespace VaccinationScheduling.Online
 {
@@ -11,35 +13,31 @@ namespace VaccinationScheduling.Online
         {
             Global global = ReadUtils.ReadGlobal();
             JobEnumerable jobs = new(global);
-            List<Machine> machines = new();
+            Machines machines = new Machines(global);
+
+            machines.freeRangesFirstJob.RemoveRange(4, 7, 1);
+            machines.freeRangesSecondJob.RemoveRange(4, 7, 1);
+
+            int nrMachines = 0;
 
             foreach (Job job in jobs)
             {
-                // Returns whether a job was added.
-                bool ScheduleJob()
+                machines.FindGreedySpot(job);
+                // Console.WriteLine(new Schedule(tFirstJob, machineIndex, tSecondJob, machineIndex));
+                /*// We have to create a new machine
+                (tFirstJob, firstMachine, tSecondJob, secondMachine) = machine.FindGreedySpot(job)
+                if (machine.FindGreedySpot(job) is not var (tFirstJob, tSecondJob))
                 {
-                    for (int machineIndex = 0; machineIndex < machines.Count; machineIndex++)
-                    {
-                        Machine machine = machines[machineIndex];
-                        if (machine.FindGreedySpot(job) is not var (tFirstJob, tSecondJob)) continue;
-                        Console.WriteLine(new Schedule(tFirstJob, machineIndex, tSecondJob, machineIndex));
-                        machine.ScheduleJobs(tFirstJob, tSecondJob);
-                        return true;
-                    }
-
-                    return false;
+                    machine.ScheduleJobs(tFirstJob, tSecondJob);
+                    WriteDebugLine("No free spot found, adding a new machine");
                 }
-
-                if (ScheduleJob()) continue;
-
-                WriteDebugLine("No free spot found, adding a new machine");
 
                 machines.Add(new Machine(global));
                 machines[^1].ScheduleJobs(
                     job.MinFirstIntervalStart,
                     job.MinFirstIntervalStart + job.MinGapIntervalStarts
                 );
-                Console.WriteLine(new Schedule(job.MinFirstIntervalStart, machines.Count, job.MinFirstIntervalStart + job.MinGapIntervalStarts, machines.Count));
+                Console.WriteLine(new Schedule(job.MinFirstIntervalStart, machines.Count, job.MinFirstIntervalStart + job.MinGapIntervalStarts, machines.Count));*/
             }
         }
     }

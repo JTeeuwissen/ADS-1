@@ -94,7 +94,7 @@ namespace VaccinationScheduling.Online.Tree
             Debug.Assert(jobLength > 0);
             this.count = 0;
             // Each tree starts with 'infinite range'
-            Insert(new Range(0, -1));
+            Insert(new Range(0, null));
         }
 
         /// <summary>

@@ -6,7 +6,7 @@ using Range = VaccinationScheduling.Online.Tree.Range;
 
 namespace VaccinationScheduling.Online
 {
-    public class Machine
+    public class Machines
     {
         /// <summary>
         /// RedBlackTree containing the ranges at which there are free spots to START a first job.
@@ -18,11 +18,13 @@ namespace VaccinationScheduling.Online
         /// </summary>
         public RedBlackTree freeRangesSecondJob;
 
+        public int NrMachines = 0;
+
         /// <summary>
         /// Create a machine schedule
         /// </summary>
         /// <param name="global">Global parameters of the program</param>
-        public Machine(Global global)
+        public Machines(Global global)
         {
             freeRangesFirstJob = new RedBlackTree(global.TimeFirstDose);
             freeRangesSecondJob = new RedBlackTree(global.TimeSecondDose);
@@ -43,9 +45,15 @@ namespace VaccinationScheduling.Online
             // Whilst there are still possible places left
             while (firstJobEnumerate.MoveNext())
             {
+                // Tree 0-3 4-7(Not 1) 8-INF
+                // Job 3-5 mingap 4 maxgap 6
+                // 3 en 8
                 Range firstJob = firstJobEnumerate.Current;
+
                 int minTSecondJob = Math.Max(firstJobEnumerate.Current.Start, job.MinFirstIntervalStart) + job.MinGapIntervalStarts;
-                int maxTSecondJob = Math.Min(firstJobEnumerate.Current.EndMaybe, job.MaxFirstIntervalStart + job.MaxGapIntervalStarts);
+                // 3 + 4
+                int? maxTSecondJob = firstJobEnumerate.Current.EndMaybe == null ? null : Math.Min(job.MaxFirstIntervalStart, (int)firstJobEnumerate.Current.EndMaybe) + job.MaxGapIntervalStarts;
+                // 3 + 6
 
                 // Go through current
                 for (int i = slidingWindowIndex; i < secondRanges.Count; i++)
@@ -56,12 +64,9 @@ namespace VaccinationScheduling.Online
                         slidingWindowIndex++;
                         continue;
                     }
-                    
-                    // There is no overlap
-                    if (secondRanges[i].GetOverlap(minTSecondJob, maxTSecondJob) is not var (tCurrentFirstJob, _))
-                        continue;
 
                     // The job can never start before the first job
+                    int tCurrentFirstJob = 0;
                     int tFirstJob = Math.Max(Math.Max(firstJob.Start, job.MinFirstIntervalStart), tCurrentFirstJob - job.MaxGapIntervalStarts);
                     int tSecondJob = Math.Max(tFirstJob + job.MinGapIntervalStarts, tCurrentFirstJob);
 
@@ -73,6 +78,9 @@ namespace VaccinationScheduling.Online
                     return (tFirstJob, tSecondJob);
                 }
 
+                // Tree 0-3 4-7(Not 1) 8-INF
+                // Job 3-5 mingap 4 maxgap 6
+                // 3 en 8
                 // Add new items to the list since we can expand the second
                 while (secondJobEnumerate.MoveNext())
                 {
@@ -194,13 +202,13 @@ namespace VaccinationScheduling.Online
                 else
                 {
                     // Define new end of the range
-                    foundRange.EndMaybe = Math.Min(tJob - tree.JobLength, foundRange.EndMaybe);
+                    foundRange.EndMaybe = foundRange.EndMaybe == null ? null : Math.Min(tJob - tree.JobLength, (int)foundRange.EndMaybe);
                 }
             }
             // It hovers somewhere in the middle, so we need to insert another item
             else
             {
-                int newRangeEnd = foundRange.EndMaybe;
+                int? newRangeEnd = foundRange.EndMaybe;
                 foundRange.EndMaybe = tJob - tree.JobLength;
                 tree.Insert(new Range(tJob + jobLength, newRangeEnd));
             }

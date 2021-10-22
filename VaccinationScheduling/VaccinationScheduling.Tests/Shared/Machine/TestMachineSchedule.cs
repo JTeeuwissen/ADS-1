@@ -1,4 +1,4 @@
-﻿using FsCheck;
+﻿/*using FsCheck;
 using VaccinationScheduling.Online.Tree;
 using Xunit;
 using VaccinationScheduling.Shared;
@@ -201,3 +201,4 @@ namespace VaccinationScheduling.Tests.Shared.Machine
         }
     }
 }
+*/

@@ -5,6 +5,7 @@
         ExpandRight,
         ExpandLeft,
         ExpandAndYield,
-        Yield
+        Yield,
+        FreeExpand
     }
 }

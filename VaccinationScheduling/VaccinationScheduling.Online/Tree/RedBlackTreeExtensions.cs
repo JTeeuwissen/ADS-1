@@ -1,6 +1,9 @@
 ﻿using System.Collections.Generic;
+using System.Collections;
 using System.Diagnostics.CodeAnalysis;
 using System.Text;
+using System;
+using VaccinationScheduling.Online.List;
 
 namespace VaccinationScheduling.Online.Tree
 {
@@ -98,18 +101,18 @@ namespace VaccinationScheduling.Online.Tree
         /// <param name="first">The lower bound.</param>
         /// <param name="last">The upper bound.</param>
         /// <returns>A RangeTester delegate that tests for an item in the given range.</returns>
-        private RangeTester DoubleBoundedRangeTester(int first, int last)
+        private RangeTester DoubleBoundedRangeTester(int first, int? last)
         {
             return delegate(Range item)
             {
                 if (item.CompareTo(first) < 0)
                     return -1; // item is before or equal to first.
 
-                if (last == -1)
+                if (last == null)
                     return 0;
 
                 // ReSharper disable once ConvertIfStatementToReturnStatement
-                if (item.CompareTo(last) > 0)
+                if (item.CompareTo((int)last) > 0)
                     return 1; // item is after or equal to last
 
                 return 0; // item is between first and last.
@@ -122,7 +125,7 @@ namespace VaccinationScheduling.Online.Tree
         /// <param name="first">Left bound of the enumerate range</param>
         /// <param name="last">Right bound of the enumerate range</param>
         /// <returns>Enumerable that can be used in a foreach loop</returns>
-        public IEnumerable<Range> EnumerateRange(int first, int last)
+        public IEnumerable<Range> EnumerateRange(int first, int? last)
         {
             RangeTester rangeTester = DoubleBoundedRangeTester(first, last);
             return EnumerateRange(rangeTester);
@@ -137,6 +140,181 @@ namespace VaccinationScheduling.Online.Tree
         public IEnumerable<Range> FastEnumerateRange(int first, int last)
         {
             return FastEnumerateRangeInOrder(first, last, root);
+        }
+
+        public void RemoveRange(int tStartRange, int tEndRange, int machineNr)
+        {
+            bool foundBeforeStart = false;
+            bool mergeRangeAfter = false;
+
+            // tree --3 4-6-8 -10-- 13-- ------ -----
+            IEnumerator<Range> ranges = FastEnumerateRange(tStartRange, tEndRange).GetEnumerator();
+            Range range = null;
+            while (ranges.MoveNext())
+            {
+                range = ranges.Current;
+                if (range.NotList.Contains(machineNr))
+                {
+                    MergeRangeBefore(range);
+                    continue;
+                }
+                // Last range item
+                if (range.EndMaybe == null)
+                {
+                    // tree -------------INF
+                    // job  -------
+                    // converted to:
+                    //      -------(Not x)
+                    //             ------INF
+                    if (tStartRange <= range.Start)
+                    {
+                        range.EndMaybe = tEndRange;
+                        range.NotList.Add(machineNr);
+                        Insert(new Range(tEndRange + 1, null));
+                        if (!foundBeforeStart)
+                        {
+                            foundBeforeStart = true;
+                            MergeRangeBefore(range);
+                        }
+                    }
+                    // tree -------------INF
+                    // job    -----
+                    // converted to:
+                    //      --
+                    //        -----(Not x)
+                    //             ------INF
+                    if (tStartRange > range.Start)
+                    {
+                        range.EndMaybe = tStartRange - 1;
+                        SetList sl = new SetList(machineNr);
+                        Insert(new Range(tStartRange, tEndRange, sl));
+                        Insert(new Range(tEndRange + 1, null));
+                    }
+                    return;
+                }
+                int rangeStart = Math.Max(tStartRange, range.Start);
+                int rangeEnd = Math.Min(tEndRange, (int)range.EndMaybe);
+                // Range item inbetween
+                // tree ---------
+                // job  ---------
+                // converts to:
+                //      ---------(Not x)
+                // Begin + Einde
+                if (rangeStart == range.Start && rangeEnd == range.EndMaybe)
+                {
+                    range.NotList.Add(machineNr);
+                    if (!foundBeforeStart)
+                    {
+                        foundBeforeStart = true;
+                        MergeRangeBefore(range);
+                    }
+                    mergeRangeAfter = true;
+                }
+                // tree ---------
+                // job  -------
+                // Converts to:
+                //      -------(Not x)
+                //             --
+                // Begin
+                else if(rangeStart == range.Start)
+                {
+                    int oldEnd = (int)range.EndMaybe;
+                    range.EndMaybe = rangeEnd;
+                    Insert(new Range(rangeEnd + 1, oldEnd, range.NotList.Clone()));
+                    range.NotList.Add(machineNr);
+                    if (!foundBeforeStart)
+                    {
+                        foundBeforeStart = true;
+                        MergeRangeBefore(range);
+                    }
+                    mergeRangeAfter = false;
+                }
+                // tree ---------
+                // job    -------
+                // Converts to:
+                //      --
+                //        -------(Not x)
+                // Eind
+                else if (rangeEnd == range.EndMaybe)
+                {
+                    int oldEnd = (int)range.EndMaybe;
+                    range.EndMaybe = rangeStart - 1;
+                    Range newRange = new(rangeStart, oldEnd, range.NotList.Clone());
+                    newRange.NotList.Add(machineNr);
+                    Insert(newRange);
+                    mergeRangeAfter = true;
+                }
+                // tree ---------
+                // job    -----
+                // Converts to:
+                //      --
+                //        -----(Not x)
+                //             --
+                else
+                {
+                    int oldEnd = (int)range.EndMaybe;
+                    range.EndMaybe = rangeStart - 1;
+                    Insert(new Range(rangeEnd + 1, oldEnd, range.NotList.Clone()));
+                    Range newRange = new(rangeStart, rangeEnd, range.NotList.Clone());
+                    newRange.NotList.Add(machineNr);
+                    Insert(newRange);
+                    mergeRangeAfter = false;
+                }
+            }
+
+            // The there is no range after the current one that needs to get updated
+            if (range == null || !mergeRangeAfter)
+            {
+                return;
+            }
+
+            MergeRangeAfter(range);
+        }
+
+        public void MergeRangeBefore(Range range)
+        {
+            // tree ((Not x)--------)(----------(Not x))
+            // converts to: --------------------(Not x)
+
+            // There is no range before the current range
+            if (range.Start == 0)
+            {
+                return;
+            }
+
+            // Find the range before
+            Range beforeRange;
+            Find(range.Start - 1, out beforeRange);
+            if (range.NotList.AreEqual(beforeRange.NotList))
+            {
+                // Delete range and update the previous range
+                bool deleted = Delete(beforeRange, true, out beforeRange);
+                //Debug.Assert(deleted);
+                range.Start = beforeRange.Start;
+            }
+        }
+
+        public void MergeRangeAfter(Range range)
+        {
+            // tree ((Not x)--------)(----------(Not x))
+            // converts to: --------------------(Not x)
+
+            // There is no range after the current range
+            if (range.EndMaybe == null)
+            {
+                return;
+            }
+
+            // Find the range before
+            Range afterRange;
+            Find((int)range.EndMaybe + 1, out afterRange);
+            if (range.NotList.AreEqual(afterRange.NotList))
+            {
+                // Delete range and update the previous range
+                bool deleted = Delete(afterRange, true, out afterRange);
+                //Debug.Assert(deleted);
+                range.EndMaybe = afterRange.EndMaybe;
+            }
         }
 
         /// <summary>
@@ -210,6 +388,7 @@ namespace VaccinationScheduling.Online.Tree
             count += 1;
         }
 
+
         /// <summary>
         /// Enumerate all the items in a custom range, under and including node, in-order.
         /// </summary>
@@ -267,7 +446,7 @@ namespace VaccinationScheduling.Online.Tree
                 {
                     yield return current.item;
                 }
-                else if(commandType == CommandType.FreeExpand)
+                else if (commandType == CommandType.FreeExpand)
                 {
                     if (current.right != null)
                     {
@@ -280,20 +459,20 @@ namespace VaccinationScheduling.Online.Tree
                     }
                 }
                 // We need to expand to get the next item
-                else if(commandType == CommandType.ExpandAndYield)
+                else if (commandType == CommandType.ExpandAndYield)
                 {
                     if (current.right != null)
                     {
                         compare = rangeTester(current.right.item);
                         if (compare == 0)
                         {
-                            if(parentInRange && !isLeftChild)
+                            if (parentInRange && isLeftChild)
                                 stack.Push((CommandType.FreeExpand, current.right, true, false));
                             else
                                 stack.Push((CommandType.ExpandAndYield, current.right, true, false));
                         }
-                        // Right item is not too small
-                        else if (compare < 0)
+                        // Right item is too big
+                        else if (compare > 0)
                         {
                             stack.Push((CommandType.ExpandLeft, current.right, true, false));
                         }
@@ -306,24 +485,24 @@ namespace VaccinationScheduling.Online.Tree
                         compare = rangeTester(current.left.item);
                         if (compare == 0)
                         {
-                            if(parentInRange && isLeftChild)
+                            if (parentInRange && !isLeftChild)
                                 stack.Push((CommandType.FreeExpand, current.left, true, true));
                             else
                                 stack.Push((CommandType.ExpandAndYield, current.left, true, true));
                         }
-                        // Left item is not too big
-                        else if (compare > 0)
+                        // Left item is too small
+                        else if (compare < 0)
                         {
                             // We still want to check
                             stack.Push((CommandType.ExpandRight, current.left, true, true));
                         }
                     }
                 }
-                else if(commandType == CommandType.ExpandRight)
+                else if (commandType == CommandType.ExpandRight)
                 {
-                    if(current.right != null)
+                    if (current.right != null)
                     {
-                        if(current.right.item.CompareTo(first) < 0)
+                        if (current.right.item.CompareTo(first) < 0)
                         {
                             stack.Push((CommandType.ExpandRight, current.right, false, false));
                         }
@@ -335,9 +514,9 @@ namespace VaccinationScheduling.Online.Tree
                 }
                 else
                 {
-                    if(current.left != null)
+                    if (current.left != null)
                     {
-                        if(current.left.item.CompareTo(last) > 0)
+                        if (current.left.item.CompareTo(last) > 0)
                         {
                             stack.Push((CommandType.ExpandLeft, current.left, false, true));
                         }
@@ -350,148 +529,14 @@ namespace VaccinationScheduling.Online.Tree
             }
         }
 
-        /*/// <summary>
-        /// Enumerate all the items in a custom range, under and including node, in-order.
-        /// </summary>
-        /// <param name="rangeTester">Tests an item against the custom range.</param>
-        /// <param name="node">Node to begin enumeration. May be null.</param>
-        /// <returns>An enumerable of the items.</returns>
-        /// <exception cref="InvalidOperationException">The tree has an item added or deleted during the enumeration.</exception>
-        private IEnumerable<Range> FastEnumerateRangeInOrder(RangeTester rangeTester, Node root)
-        {
-            Stack<Node> stack = new Stack<Node>();
-            Node current = root;
-            int compare = 1;
-
-            // Find the highest parent that overlaps with the range
-            while (current != null)
-            {
-                compare = rangeTester(current.item);
-
-                if (compare > 0)
-                {
-                    current = current.left;
-                }
-                else if (compare < 0)
-                {
-                    current = current.right;
-                }
-                else
-                {
-                    break;
-                }
-            }
-
-            // Go to the most left item containing the lower range
-            expandStackLeft(stack, current, rangeTester);
-
-            bool enumeratingStarted = true;
-            bool goingLeft = true;
-            bool wentLeft = false;
-            bool goingDown = true;
-            bool pushed = false;
-
-            // Now we can enumerate the stack left from the root
-            while (stack.Count != 0)
-            {
-                if (goingLeft)
-                {
-                    wentLeft = false;
-                    compare = rangeTester(current.item);
-                    // Too high
-                    if (compare > 0)
-                    {
-                        goingLeft = false;
-                    }
-                    else
-                    {
-                        goingLeft = true;
-                        stack.Push(current);
-                        current = current.left;
-                        continue;
-                    }
-                    //current = stack.Pop();
-                    //yield return current.item;
-                }
-                else if (!goingLeft)
-                {
-                    current = stack.Pop();
-                    if (!wentLeft)
-                    {
-
-                    }
-                }
-            }
-        }*/
-
-        private void expandStackLeft(Stack<Node> stack, Node node, RangeTester rangeTester)
-        {
-            int compare = 0;
-            while (node != null)
-            {
-                compare = rangeTester(node.item);
-                if (compare == 0)
-                {
-                    stack.Push(node);
-                    node = node.left;
-                }
-                // Too low
-                else if (compare < 0)
-                {
-                    node = node.right;
-                }
-                // If we went too high there is no more items to ad to the stack
-                else
-                {
-                    break;
-                }
-            }
-        }
-
-        private void expandStackRight(Stack<Node> stack, Node node, RangeTester rangeTester)
-        {
-            int compare = 0;
-            while (node != null)
-            {
-                compare = rangeTester(node.item);
-                if (compare == 0)
-                {
-                    stack.Push(node);
-                    node = node.right;
-                }
-                // Too high, see if the left branch does still contain some range
-                else if (compare > 0)
-                {
-                    node = node.left;
-                }
-                // Cannot find an item that is too
-                else
-                {
-                    break;
-                }
-            }
-        }
-
-        /*public override string ToString()
-        {
-            StringBuilder sb = new();
-            foreach (Range range in this)
-            {
-                sb.Append(range);
-                if (range.End != -1) sb.Append("->");
-            }
-
-            return sb.ToString();
-        }*/
-
         public override string ToString()
         {
             StringBuilder sb = new();
             //foreach (Range range in FastEnumerateRange(0, -1))
-            foreach (Range range in EnumerateRange(0, -1))
+            foreach (Range range in EnumerateRange(0, null))
             {
                 sb.Append(range);
-                if (range.EndMaybe != -1) sb.Append("->");
+                if (range.EndMaybe != null) sb.Append("->");
             }
 
             return sb.ToString();

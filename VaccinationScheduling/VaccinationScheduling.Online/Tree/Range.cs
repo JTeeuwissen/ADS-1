@@ -1,4 +1,7 @@
 ﻿using System;
+using System.Collections;
+using System.Collections.Generic;
+using VaccinationScheduling.Online.List;
 
 namespace VaccinationScheduling.Online.Tree
 {
@@ -14,26 +17,34 @@ namespace VaccinationScheduling.Online.Tree
         /// </summary>
         public int? EndMaybe;
 
+        public SetList NotList = new SetList();
+
         /// <summary>
         /// Create a range object. The range is where there is no job.
         /// </summary>
         /// <param name="start"></param>
         /// <param name="end"></param>
-        public Range(int start, int end)
+        public Range(int start, int? end)
         {
             Start = start;
             EndMaybe = end;
         }
 
+        public Range(int start, int? end, SetList notList)
+        {
+            Start = start;
+            EndMaybe = end;
+            NotList = notList;
+        }
 
-        public (int, int)? GetOverlap(int tStart, int tEnd)
+        public (int, int?)? GetOverlap(int tStart, int? tEnd)
         {
             // Check for overlap
             bool overlap = (EndMaybe == null || tStart < EndMaybe) && Start < tEnd;
             if (!overlap) return null;
 
             // There is overlapping range
-            return (Math.Max(Start, tStart), EndMaybe is {} end ? Math.Min(end, tEnd) : tEnd);
+            return (Math.Max(Start, tStart), EndMaybe is {} end ? Math.Min(end, (int)tEnd) : tEnd);
         }
 
         /// <summary>
@@ -80,6 +91,11 @@ namespace VaccinationScheduling.Online.Tree
                 return 1;
             }
 
+            if (EndMaybe == null)
+            {
+                return 0;
+            }
+
             if (EndMaybe < time)
             {
                 return -1;
@@ -94,7 +110,8 @@ namespace VaccinationScheduling.Online.Tree
         /// <returns>Object in string format</returns>
         public override string ToString()
         {
-            return EndMaybe == null ? $"({Start},INFINITY)" : $"({Start},{EndMaybe})";
+            string range = EndMaybe == null ? $"{Start}-INFINITY" : $"{Start}-{EndMaybe}";
+            return range + NotList.ToString();
         }
     }
 }
