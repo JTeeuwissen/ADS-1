@@ -15,14 +15,13 @@ namespace VaccinationScheduling.Online
             JobEnumerable jobs = new(global);
             Machines machines = new Machines(global);
 
+            machines.NrMachines = 1;
             machines.freeRangesFirstJob.RemoveRange(4, 7, 1);
             machines.freeRangesSecondJob.RemoveRange(4, 7, 1);
 
-            int nrMachines = 0;
-
             foreach (Job job in jobs)
             {
-                machines.FindGreedySpot(job);
+                (int, int) foundTimeSlots = machines.FindGreedySpot(job);
                 // Console.WriteLine(new Schedule(tFirstJob, machineIndex, tSecondJob, machineIndex));
                 /*// We have to create a new machine
                 (tFirstJob, firstMachine, tSecondJob, secondMachine) = machine.FindGreedySpot(job)

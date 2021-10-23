@@ -31,51 +31,92 @@ namespace VaccinationScheduling.Online
         }
 
         // Finds the first available spot inside the range.
-        public (int, int)? FindGreedySpot(Job job)
+        public (int, int) FindGreedySpot(Job job)
         {
             IEnumerator<Range> firstJobEnumerate = freeRangesFirstJob.EnumerateRange(job.MinFirstIntervalStart, job.MaxFirstIntervalStart).GetEnumerator();
-            IEnumerator<Range> secondJobEnumerate = freeRangesSecondJob.EnumerateRange(
-                job.MinFirstIntervalStart + job.MinGapIntervalStarts,
-                job.MaxFirstIntervalStart + job.MaxGapIntervalStarts
-                ).GetEnumerator();
+            IEnumerator<Range> secondJobEnumerate = freeRangesSecondJob.EnumerateRange(job.MinFirstIntervalStart + job.MinGapIntervalStarts, job.MaxFirstIntervalStart + job.MaxGapIntervalStarts).GetEnumerator();
 
-            List<Range> secondRanges = new();
+            List<(Range, int)> secondRanges = new();
             int slidingWindowIndex = 0;
+
+            int bestScore = 0;
+            int minFirstJobScore = 0;
+            (int, int, int) bestFirstJobScore = (0, NrMachines, job.MinFirstIntervalStart);
+            (int, int, int) bestSecondJobScore = (0, NrMachines, job.MinFirstIntervalStart + job.MinGapIntervalStarts);
 
             // Whilst there are still possible places left
             while (firstJobEnumerate.MoveNext())
             {
+                // Found the best answer possible
+                if (bestScore == 2)
+                {
+                    break;
+                }
+
+                bool expandCache = true;
                 // Tree 0-3 4-7(Not 1) 8-INF
                 // Job 3-5 mingap 4 maxgap 6
                 // 3 en 8
                 Range firstJob = firstJobEnumerate.Current;
 
-                int minTSecondJob = Math.Max(firstJobEnumerate.Current.Start, job.MinFirstIntervalStart) + job.MinGapIntervalStarts;
-                // 3 + 4
-                int? maxTSecondJob = firstJobEnumerate.Current.EndMaybe == null ? null : Math.Min(job.MaxFirstIntervalStart, (int)firstJobEnumerate.Current.EndMaybe) + job.MaxGapIntervalStarts;
-                // 3 + 6
+                // Score is 0 if it does not fit, otherwise 1
+                int firstJobScore = firstJob.NotList.Count == NrMachines ? 0 : 1;
+                if (firstJobScore < minFirstJobScore)
+                {
+                    continue;
+                }
+                // The second job score is
+                int minSecondJobScore = bestScore - firstJobScore;
+                // Cannot have a second score higher than 1;
+                if (minSecondJobScore >= 1)
+                {
+                    continue;
+                }
 
-                // Go through current
+                // Minimum T at which the first job can be scheduled is the minum of TMinJobStart and TRangeStart
+                int minTFirstJob = Math.Max(firstJobEnumerate.Current.Start, job.MinFirstIntervalStart);
+                // Maximum T at which the first job can be schedule is the maximum of TMaxJobStart and TRangeStart
+                int maxTFirstJob = firstJobEnumerate.Current.EndMaybe == null ? job.MaxFirstIntervalStart : Math.Min(job.MaxFirstIntervalStart, (int)firstJobEnumerate.Current.EndMaybe);
+
+                // The second job needs to be within these values given the first bounds.
+                int minTSecondJob = minTFirstJob + job.MinGapIntervalStarts;
+                int maxTSecondJob = maxTFirstJob + job.MaxGapIntervalStarts;
+
+                // Go through current 'cache'
                 for (int i = slidingWindowIndex; i < secondRanges.Count; i++)
                 {
-                    // This value cannot be inside the range anymore.
-                    if (minTSecondJob < secondRanges[i].Start)
+                    // The first value is too high for the current last item
+                    // We slide the window further so we don't go past it in future anymore.
+                    if (minTSecondJob < secondRanges[i].Item1.Start)
                     {
                         slidingWindowIndex++;
                         continue;
                     }
+                    // Score is lower than the minimum score
+                    if (secondRanges[i].Item2 < minSecondJobScore)
+                    {
+                        continue;
+                    }
+                    // The current item is out of range
+                    if (secondJobEnumerate.Current.Start > maxTSecondJob)
+                    {
+                        expandCache = false;
+                        break;
+                    }
 
-                    // The job can never start before the first job
-                    int tCurrentFirstJob = 0;
-                    int tFirstJob = Math.Max(Math.Max(firstJob.Start, job.MinFirstIntervalStart), tCurrentFirstJob - job.MaxGapIntervalStarts);
-                    int tSecondJob = Math.Max(tFirstJob + job.MinGapIntervalStarts, tCurrentFirstJob);
+                    (int, int) overlap = getOverlapWithRange(secondJobEnumerate.Current, minTSecondJob, maxTSecondJob);
+                    (int, int) scheduledTimes = getScheduleTimes(job, ref minTFirstJob, ref maxTFirstJob, ref overlap);
 
-                    Extensions.WriteDebugLine("---------------------------------");
-                    Extensions.WriteDebugLine($"First Job: {tFirstJob}, Second Job: {tSecondJob}");
-                    Extensions.WriteDebugLine(freeRangesFirstJob);
-                    Extensions.WriteDebugLine(freeRangesSecondJob);
+                    int firstJobMachine = firstJobEnumerate.Current.NotList.FindFirstNotContained();
+                    int secondJobMachine = secondJobEnumerate.Current.NotList.FindFirstNotContained();
+                    bestFirstJobScore = (firstJobScore, firstJobMachine, scheduledTimes.Item1);
+                    bestSecondJobScore = (secondRanges[i].Item2, secondJobMachine, scheduledTimes.Item2);
+                }
 
-                    return (tFirstJob, tSecondJob);
+                // We do not want to expand the list since the last item is outside the range
+                if (!expandCache)
+                {
+                    continue;
                 }
 
                 // Tree 0-3 4-7(Not 1) 8-INF
@@ -84,28 +125,48 @@ namespace VaccinationScheduling.Online
                 // Add new items to the list since we can expand the second
                 while (secondJobEnumerate.MoveNext())
                 {
-                    secondRanges.Add(secondJobEnumerate.Current);
+                    int secondJobScore = secondJobEnumerate.Current.NotList.Count == NrMachines ? 0 : 1;
+                    // Score is lower than the minimum score
+                    if (secondJobScore < minSecondJobScore)
+                    {
+                        continue;
+                    }
+
+                    secondRanges.Add((secondJobEnumerate.Current, secondJobScore));
+
+                    // The current item is too large
                     if (secondJobEnumerate.Current.Start > maxTSecondJob)
                         break;
 
-                    // There is no overlap
-                    if (secondJobEnumerate.Current.GetOverlap(minTSecondJob, maxTSecondJob) is not var (tCurrentFirstJob, _))
-                        continue;
+                    (int, int) overlap = getOverlapWithRange(secondJobEnumerate.Current, minTSecondJob, maxTSecondJob);
+                    (int, int) scheduledTimes = getScheduleTimes(job, ref minTFirstJob, ref maxTFirstJob, ref overlap);
 
-                    // The job can never start before the first job
-                    int tFirstJob = Math.Max(Math.Max(firstJob.Start, job.MinFirstIntervalStart), tCurrentFirstJob - job.MaxGapIntervalStarts);
-                    int tSecondJob = Math.Max(tFirstJob + job.MinGapIntervalStarts, tCurrentFirstJob);
-
-                    Extensions.WriteDebugLine("---------------------------------");
-                    Extensions.WriteDebugLine($"First Job: {tFirstJob}, Second Job: {tSecondJob}");
-                    Extensions.WriteDebugLine(freeRangesFirstJob);
-                    Extensions.WriteDebugLine(freeRangesSecondJob);
-
-                    return (tFirstJob, tSecondJob);
+                    int firstJobMachine = firstJobEnumerate.Current.NotList.FindFirstNotContained();
+                    int secondJobMachine = secondJobEnumerate.Current.NotList.FindFirstNotContained();
+                    bestFirstJobScore = (firstJobScore, firstJobMachine, scheduledTimes.Item1);
+                    bestSecondJobScore = (secondJobScore, secondJobMachine, scheduledTimes.Item2);
+                    bestScore = firstJobScore + secondJobScore;
                 }
             }
 
-            return null;
+            Extensions.WriteDebugLine($"Best score {bestFirstJobScore.Item1 + bestSecondJobScore.Item1}");
+            Extensions.WriteDebugLine($"#1 Machine: {bestFirstJobScore.Item2} T:{bestFirstJobScore.Item3}");
+            Extensions.WriteDebugLine($"#2 Machine: {bestSecondJobScore.Item2} T:{bestSecondJobScore.Item3}");
+            return (bestFirstJobScore.Item2, bestSecondJobScore.Item2);
+        }
+
+        private (int, int) getOverlapWithRange(Range range, int tStart, int tEnd)
+        {
+            return (Math.Max(range.Start, tStart), range.EndMaybe is {} end ? Math.Min(end, tEnd) : tEnd);
+        }
+
+        public (int, int) getScheduleTimes(Job job, ref int tFirstIntervalStart, ref int tFirstIntervalEnd, ref (int, int) tSecondInterval)
+        {
+            // We start the second job as soon as possible
+            int secondJobStart = tSecondInterval.Item1;
+            // The first job timing depends on the second job timing
+            int firstJobStart = Math.Max(tFirstIntervalStart, secondJobStart - job.MaxGapIntervalStarts);
+            return (firstJobStart, secondJobStart);
         }
 
         /// <summary>

@@ -40,10 +40,10 @@ namespace VaccinationScheduling.Online.List
             31, 27, 13, 23, 21, 19, 16, 7, 26, 12, 18, 6, 11, 5, 10, 9
         };
 
-        public void Add(int i)
+        public void Add(int machineNr)
         {
-            int listIndex = i / 32;
-            int bitIndex = i % 32;
+            int listIndex = machineNr / 32;
+            int bitIndex = machineNr % 32;
 
             while (listIndex >= Set.Count)
             {
@@ -54,7 +54,7 @@ namespace VaccinationScheduling.Online.List
             {
                 Set[listIndex] += (uint)1 << bitIndex;
                 Count++;
-                Extensions.WriteDebugLine("Added:"+ ToString());
+                Extensions.WriteDebugLine($"Added {machineNr}:" + ToString());
             }
         }
 
@@ -102,6 +102,29 @@ namespace VaccinationScheduling.Online.List
                 int result = MultiplyDeBruijnBitPosition[((UInt32)((c & -c) * 0x077CB531U)) >> 27];
                 return (false, result);
             }
+        }
+
+        public int FindFirstNotContained()
+        {
+            // Loop through the entire 'set'
+            for (int i = 0; i < Set.Count; i++)
+            {
+                // An item is not contained in the current 32
+                if (Set[i] != uint.MaxValue)
+                {
+                    uint c = Set[i] ^ uint.MaxValue;
+                    int result = getIndex(c);
+                    Extensions.WriteDebugLine("Added:" + ToString());
+                    return result;
+                }
+            }
+            // The first machine that is not contained
+            return Count;
+        }
+
+        private int getIndex(uint c)
+        {
+            return MultiplyDeBruijnBitPosition[((UInt32)((c & -c) * 0x077CB531U)) >> 27];
         }
 
         public bool AreEqual(SetList setList)
