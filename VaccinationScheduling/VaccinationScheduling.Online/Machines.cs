@@ -31,7 +31,7 @@ namespace VaccinationScheduling.Online
         }
 
         // Finds the first available spot inside the range.
-        public (int, int) FindGreedySpot(Job job)
+        public (int, int, int, int) FindGreedySpot(Job job)
         {
             IEnumerator<Range> firstJobEnumerate = freeRangesFirstJob.EnumerateRange(job.MinFirstIntervalStart, job.MaxFirstIntervalStart).GetEnumerator();
             IEnumerator<Range> secondJobEnumerate = freeRangesSecondJob.EnumerateRange(job.MinFirstIntervalStart + job.MinGapIntervalStarts, job.MaxFirstIntervalStart + job.MaxGapIntervalStarts).GetEnumerator();
@@ -152,7 +152,7 @@ namespace VaccinationScheduling.Online
             Extensions.WriteDebugLine($"Best score {bestFirstJobScore.Item1 + bestSecondJobScore.Item1}");
             Extensions.WriteDebugLine($"#1 Machine: {bestFirstJobScore.Item2} T:{bestFirstJobScore.Item3}");
             Extensions.WriteDebugLine($"#2 Machine: {bestSecondJobScore.Item2} T:{bestSecondJobScore.Item3}");
-            return (bestFirstJobScore.Item2, bestSecondJobScore.Item2);
+            return (bestFirstJobScore.Item2, bestSecondJobScore.Item2, bestFirstJobScore.Item3, bestSecondJobScore.Item3);
         }
 
         private (int, int) getOverlapWithRange(Range range, int tStart, int tEnd)
@@ -160,7 +160,7 @@ namespace VaccinationScheduling.Online
             return (Math.Max(range.Start, tStart), range.EndMaybe is {} end ? Math.Min(end, tEnd) : tEnd);
         }
 
-        public (int, int) getScheduleTimes(Job job, ref int tFirstIntervalStart, ref int tFirstIntervalEnd, ref (int, int) tSecondInterval)
+        private (int, int) getScheduleTimes(Job job, ref int tFirstIntervalStart, ref int tFirstIntervalEnd, ref (int, int) tSecondInterval)
         {
             // We start the second job as soon as possible
             int secondJobStart = tSecondInterval.Item1;
@@ -170,109 +170,30 @@ namespace VaccinationScheduling.Online
         }
 
         /// <summary>
-        /// Schedule two jobs containing given timestamps
-        /// </summary>
-        /// <param name="tFirstJob">Time at which to schedule the first job</param>
-        /// <param name="tSecondJob">Time at which to schedule the second job</param>
-        public void ScheduleJobs(int tFirstJob, int tSecondJob)
-        {
-            // The two jobs cannot overlap
-            //Debug.Assert(tFirstJob + freeRangesFirstJob.JobLength <= tSecondJob);
-
-            // Find the ranges at which the jobs are scheduled
-            freeRangesFirstJob.Find(tFirstJob, out Range firstJob);
-            freeRangesSecondJob.Find(tSecondJob, out Range secondJob);
-
-            ScheduleJobs(tFirstJob, firstJob, tSecondJob, secondJob);
-        }
-
-        /// <summary>
         /// Schedule two jobs given both ranges to insert the job on
         /// </summary>
         /// <param name="tFirstJob">The time at which to schedule the first job</param>
         /// <param name="firstJob">The range that the first job gets scheduled on</param>
         /// <param name="tSecondJob">The time at which to schedule the second job</param>
         /// <param name="secondJob">The range that the first job gets scheduled on</param>
-        private void ScheduleJobs(int tFirstJob, Range firstJob, int tSecondJob, Range secondJob)
+        public void ScheduleJobs(int firstMachineNr, int secondMachineNr, int tFirstJob, int tSecondJob)
         {
-            // Schedule the two jobs
-            ScheduleJob(freeRangesFirstJob, firstJob, tFirstJob, freeRangesFirstJob.JobLength);
-            ScheduleJob(freeRangesSecondJob, secondJob, tSecondJob, freeRangesSecondJob.JobLength);
+            if (firstMachineNr == NrMachines || secondMachineNr == NrMachines)
+            {
+                NrMachines++;
+            }
 
-            // Update the opposite tree to keep the newly scheduled jobs into account
-            ScheduleJob(freeRangesFirstJob, tSecondJob, freeRangesSecondJob.JobLength);
-            ScheduleJob(freeRangesSecondJob, tFirstJob, freeRangesFirstJob.JobLength);
+            // Remove ranges of each of the jobs
+            freeRangesFirstJob.RemoveRange(tFirstJob - freeRangesFirstJob.JobLength + 1, tFirstJob + freeRangesFirstJob.JobLength - 1, firstMachineNr);
+            freeRangesSecondJob.RemoveRange(tSecondJob - freeRangesSecondJob.JobLength + 1, tSecondJob + freeRangesSecondJob.JobLength - 1, secondMachineNr);
+
+            // Remove ranges of the second job
+            freeRangesFirstJob.RemoveRange(tSecondJob - freeRangesFirstJob.JobLength + 1, tSecondJob + freeRangesSecondJob.JobLength - 1, secondMachineNr);
+            freeRangesSecondJob.RemoveRange(tFirstJob - freeRangesSecondJob.JobLength + 1, tFirstJob + freeRangesFirstJob.JobLength - 1, firstMachineNr);
 
             Extensions.WriteDebugLine("Added to both trees!");
             Extensions.WriteDebugLine(freeRangesFirstJob);
             Extensions.WriteDebugLine(freeRangesSecondJob);
-        }
-
-        /// <summary>
-        /// First find the range to insert on before calling the below method
-        /// </summary>
-        /// <param name="tree">Tree to insert the job on</param>
-        /// <param name="tJob">The time at which the job takes place</param>
-        /// <param name="jobLength">Length of the job</param>
-        public void ScheduleJob(RedBlackTree tree, int tJob, int jobLength)
-        {
-            Range job;
-            tree.FindOrPrevious(tJob, out job);
-            ScheduleJob(tree, job, tJob, jobLength);
-        }
-
-        /// <summary>
-        /// Schedule a job in the given tree in the range
-        /// Can only affect the range on which the job
-        /// </summary>
-        /// <param name="tree">Tree to insert the job on</param>
-        /// <param name="foundRange">Range that needs to get adapted when scheduling this job</param>
-        /// <param name="tJob">The time at which the job takes place</param>
-        /// <param name="jobLength">Length of the job</param>
-        public static void ScheduleJob(RedBlackTree tree, Range foundRange, int tJob, int jobLength)
-        {
-            // When the second value is null. It represents 'infinite'
-            bool infiniteRange = foundRange.EndMaybe == null;
-
-            // Job adjusts the start of the range
-            if (foundRange.Start + tree.JobLength > tJob)
-            {
-                // The new range would be negative, so delete it instead
-                if (foundRange.EndMaybe < tJob + jobLength && !infiniteRange)
-                {
-                    bool res = tree.Delete(foundRange, false, out foundRange);
-                    Extensions.WriteDebugLine("Deleted item");
-                    //Debug.Assert(res);
-                }
-                else
-                {
-                    // Define the new start of the range
-                    foundRange.Start = Math.Max(tJob + jobLength, foundRange.Start);
-                }
-            }
-            // Only need to adapt the end of the range
-            else if (foundRange.EndMaybe - jobLength < tJob && !infiniteRange)
-            {
-                // The new range would be negative, so delete it instead
-                if (tJob - tree.JobLength < foundRange.Start)
-                {
-                    bool res = tree.Delete(foundRange, false, out foundRange);
-                    //Debug.Assert(res);
-                    Extensions.WriteDebugLine("Deleted item");
-                }
-                else
-                {
-                    // Define new end of the range
-                    foundRange.EndMaybe = foundRange.EndMaybe == null ? null : Math.Min(tJob - tree.JobLength, (int)foundRange.EndMaybe);
-                }
-            }
-            // It hovers somewhere in the middle, so we need to insert another item
-            else
-            {
-                int? newRangeEnd = foundRange.EndMaybe;
-                foundRange.EndMaybe = tJob - tree.JobLength;
-                tree.Insert(new Range(tJob + jobLength, newRangeEnd));
-            }
         }
     }
 }

@@ -54,7 +54,7 @@ namespace VaccinationScheduling.Online.List
             {
                 Set[listIndex] += (uint)1 << bitIndex;
                 Count++;
-                Extensions.WriteDebugLine($"Added {machineNr}:" + ToString());
+                // Extensions.WriteDebugLine($"Added {machineNr}:" + ToString());
             }
         }
 
@@ -79,7 +79,7 @@ namespace VaccinationScheduling.Online.List
                 if (Set[i] != setList.Set[i])
                 {
                     uint c = Set[i] ^ setList.Set[i];
-                    int result = MultiplyDeBruijnBitPosition[((UInt32)((c & -c) * 0x077CB531U)) >> 27];
+                    int result = getIndex(c);
                     bool isCurrentList = (Set[i] & masks[result]) != 0;
                     return (isCurrentList, result);
                 }
@@ -93,13 +93,13 @@ namespace VaccinationScheduling.Online.List
             if (Count > maxCommonIndex)
             {
                 uint c = Set[maxCommonIndex + 1];
-                int result = MultiplyDeBruijnBitPosition[((UInt32)((c & -c) * 0x077CB531U)) >> 27];
+                int result = getIndex(c);
                 return (true, result);
             }
             else
             {
                 uint c = setList.Set[maxCommonIndex + 1];
-                int result = MultiplyDeBruijnBitPosition[((UInt32)((c & -c) * 0x077CB531U)) >> 27];
+                int result = getIndex(c);
                 return (false, result);
             }
         }
@@ -114,7 +114,7 @@ namespace VaccinationScheduling.Online.List
                 {
                     uint c = Set[i] ^ uint.MaxValue;
                     int result = getIndex(c);
-                    Extensions.WriteDebugLine("Added:" + ToString());
+                    Extensions.WriteDebugLine("Found non used machine:" + result);
                     return result;
                 }
             }
@@ -129,11 +129,11 @@ namespace VaccinationScheduling.Online.List
 
         public bool AreEqual(SetList setList)
         {
-            if (Count != setList.Count)
+            if (Set.Count != setList.Set.Count)
             {
                 return false;
             }
-            for (int i = 0; i < Count; i++)
+            for (int i = 0; i < Set.Count; i++)
             {
                 if (Set[i] != setList.Set[i])
                 {
