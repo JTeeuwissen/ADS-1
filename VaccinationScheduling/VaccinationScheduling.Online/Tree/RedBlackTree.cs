@@ -90,7 +90,7 @@ namespace VaccinationScheduling.Online.Tree
         /// <param name="comparer">The IComparer&lt;T&gt; used to sort keys.</param>
         public RedBlackTree(int jobLength)
         {
-            this.JobLength = jobLength;
+            this.JabLength = jobLength;
             Debug.Assert(jobLength > 0);
             this.count = 0;
             // Each tree starts with 'infinite range'
@@ -115,7 +115,7 @@ namespace VaccinationScheduling.Online.Tree
         /// <returns>Clone version of this tree.</returns>
         public RedBlackTree Clone()
         {
-            RedBlackTree newTree = new RedBlackTree(JobLength);
+            RedBlackTree newTree = new RedBlackTree(JabLength);
             newTree.count = this.count;
             if (this.root != null)
                 newTree.root = this.root.Clone();

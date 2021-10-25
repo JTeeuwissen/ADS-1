@@ -35,8 +35,8 @@ namespace VaccinationScheduling.Online
                 {   
                     verify[machine2] = new List<(int, int)>();
                 }
-                verify[machine1].Add((tFirstJob, machines.freeRangesFirstJob.JobLength));
-                verify[machine2].Add((tSecondJob, machines.freeRangesSecondJob.JobLength));
+                verify[machine1].Add((tFirstJob, machines.freeRangesFirstJab.JabLength));
+                verify[machine2].Add((tSecondJob, machines.freeRangesSecondJab.JabLength));
 
                 Console.WriteLine(new Schedule(tFirstJob, machine1 + 1, tSecondJob, machine2 + 1));
             }
