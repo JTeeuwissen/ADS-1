@@ -1,8 +1,6 @@
 ﻿using System;
 using Google.OrTools.Sat;
 using VaccinationScheduling.Shared;
-using System.Collections.Generic;
-using System.Text;
 
 namespace VaccinationScheduling.Offline
 {
@@ -60,6 +58,9 @@ namespace VaccinationScheduling.Offline
             IntVar[] A = new IntVar[mMax];
             for (int m = 0; m < mMax; m++)
                 A[m] = model.NewBoolVar($"A_{m}");
+
+            // Minimize the sum of all used machines.
+            model.Minimize(LinearExpr.Sum(A));
 
             // Set the constraints.
 
@@ -139,9 +140,6 @@ namespace VaccinationScheduling.Offline
 
                 model.Add(LinearExpr.Sum(exp) == T[i, j]);
             }
-
-            // Minimize the sum of all used machines.
-            model.Minimize(LinearExpr.Sum(A));
 
             CpSolver solver = new();
             CpSolverStatus status = solver.Solve(model);

@@ -42,13 +42,17 @@ namespace VaccinationScheduling.Offline
             // Variable which keeps track of if a machine is used
             // ReSharper disable once InconsistentNaming
             Variable[] M = new Variable[mMax];
-            for (int k = 0; k < mMax; k++) M[k] = solver.MakeBoolVar($"M_{k}");
+            for (int m = 0; m < mMax; m++) M[m] = solver.MakeBoolVar($"M_{m}");
 
-            // M_k * t_max >= SUM(SUM(SUM(J_i_j_k_t, 0<=i<i_max), 0<=j<2),0<=t<t_max) ∀k
-            // We eisen dat M_k = 1 als er een jab plaatsvindt op de machine
+            // Minimize the sum of all used machines.
+            Objective objective = solver.Objective();
+            for (int m = 0; m < mMax; m++) objective.SetCoefficient(M[m], 1);
+            objective.SetMinimization();
+
+            // M_m must be 1 if any jab is planned in hospital m
             for (int m = 0; m < mMax; m++)
             {
-                Constraint constraint = solver.MakeConstraint(0, MaxValue, "M_k 1 if machine is used");
+                Constraint constraint = solver.MakeConstraint(0, MaxValue, "M_m 1 if machine is used");
                 constraint.SetCoefficient(M[m], tMax);
 
                 for (int i = 0; i < iMax; i++)
@@ -57,8 +61,7 @@ namespace VaccinationScheduling.Offline
                     constraint.SetCoefficient(J[i, j, m, t], -1);
             }
 
-            // SUM(SUM(J_i_j_k_t, 0<=i<i_max), 0<=j<2) <= 1 ∀k,t
-            // Er vindt maar 1 job tegelijk plaats op een machine k
+            // A maximum of 1 job is planned at any time on any machine
             for (int m = 0; m < mMax; m++)
             for (int t = 0; t < tMax; t++)
             {
@@ -69,8 +72,7 @@ namespace VaccinationScheduling.Offline
                     constraint.SetCoefficient(J[i, j, m, t], 1);
             }
 
-            // SUM(SUM(J[i,1,k,t], 0 <= t < t_max ), 0 <= k < k_max) = 1 ∀i
-            // Iedere patient krijgt 1 eerste jab
+            // Every patient gets exactly 1 first jab
             for (int i = 0; i < iMax; i++)
             {
                 Constraint constraint = solver.MakeConstraint(1, 1, "1 first jab for every patient");
@@ -80,8 +82,7 @@ namespace VaccinationScheduling.Offline
                     constraint.SetCoefficient(J[i, (int)JabEnum.FirstJab, m, t], 1);
             }
 
-            // SUM(SUM(J[i,2,k,t], 0 <= t < t_max ), 0 <= k < k_max) = 1 ∀i
-            // Iedere patient krijgt 1 tweede jab
+            // Every patient gets exactly 1 second jab
             for (int i = 0; i < iMax; i++)
             {
                 Constraint constraint = solver.MakeConstraint(1, 1, "1 second jab for every patient");
@@ -91,8 +92,7 @@ namespace VaccinationScheduling.Offline
                     constraint.SetCoefficient(J[i, (int)JabEnum.SecondJab, m, t], 1);
             }
 
-            // SUM(SUM(SUM(J_i_1_m_t', 0<=j<2), t<t'<t+p1) + J_i_1_m_t * (i_max * 2 * (p1-1)), 0 <= i < i_max) <= (i_max * 2 * (p1-1)) ∀m,t < max_t-p1
-            // Na een jab 1 wordt er in het ziekenhuis geen nieuwe jab geplanned voor een gegeven periode
+            // After a first jab in a hospital, no new jab is planned in that hospital for p1 slots
             for (int m = 0; m < mMax; m++)
             for (int t = 0; t < tMax - p1; t++)
             {
@@ -112,8 +112,7 @@ namespace VaccinationScheduling.Offline
                 }
             }
 
-            // SUM(SUM(SUM(J_i_2_m_t', 0<=j<2), t<t'<t+p2) + J_i_2_m_t * (i_max * 2 * (p2-1)), 0 <= i < i_max) <= (i_max * 2 * (p2-1)) ∀m,t < t-p2
-            // Na een jab 2 wordt er in het ziekenhuis geen nieuwe jab geplanned voor een gegeven periode
+            // After a second jab in a hospital, no new jab is planned in that hospital for p2 slots
             for (int m = 0; m < mMax; m++)
             for (int t = 0; t < tMax - p2; t++)
             {
@@ -133,8 +132,7 @@ namespace VaccinationScheduling.Offline
                 }
             }
 
-            // J_i_1_k_t = 0	∀i,k, t in [1..r_i] ∪ [(d_i-p1)..t_max] 
-            // De eerste jab valt altijd in de gegeven time interval
+            // A first jab is only planned in allowed time slots
             for (int i = 0; i < iMax; i++)
             for (int m = 0; m < mMax; m++)
             for (int t = 0; t < tMax; t++)
@@ -144,8 +142,7 @@ namespace VaccinationScheduling.Offline
                 constraint.SetCoefficient(J[i, (int)JabEnum.FirstJab, m, t], 1);
             }
 
-            // P2_i_t * (t - p_1 - g - x_i - max_t) >= SUM(SUM(J_i_1_k_t' * t', 0<=t'<max_t), 0<=k<k_max) - max_t ∀i,t
-            // Een tweede jab start niet eerder dan mag
+            // A second jab is not allowed earlier than indicated by the patient
             for (int i = 0; i < iMax; i++)
             for (int t = 0; t < tMax; t++)
             {
@@ -157,8 +154,7 @@ namespace VaccinationScheduling.Offline
                     constraint.SetCoefficient(J[i, (int)JabEnum.FirstJab, m, t1], -t1);
             }
 
-            // P2_i_t * (t + p_2) <= SUM(SUM(J_i_2_k_t' * t', 0<=t'<max_t), 0<=k<k_max) + p_1 + g + x_i + l_i ∀i,t
-            // Een tweede jab eindigt niet later dan mag
+            // A second jab is not allowed later than indicated by the patient
             for (int i = 0; i < iMax; i++)
             for (int t = 0; t < tMax; t++)
             {
@@ -174,8 +170,7 @@ namespace VaccinationScheduling.Offline
                     constraint.SetCoefficient(J[i, (int)JabEnum.FirstJab, m, t1], -t1);
             }
 
-            // J_i_2_k_t <= P2_i_t ∀i,k,t
-            // De tweede jab valt altijd in de gegeven time interval
+            // A second jab is only planned in allowed time slots
             for (int i = 0; i < iMax; i++)
             for (int m = 0; m < mMax; m++)
             for (int t = 0; t < tMax; t++)
@@ -184,12 +179,6 @@ namespace VaccinationScheduling.Offline
                 constraint.SetCoefficient(P2[i, t], -1);
                 constraint.SetCoefficient(J[i, (int)JabEnum.SecondJab, m, t], 1);
             }
-
-            // Minimize P = SUM(M_k, (0<=k<k_max))
-            // Minimize the sum of all used machines.
-            Objective objective = solver.Objective();
-            for (int m = 0; m < mMax; m++) objective.SetCoefficient(M[m], 1);
-            objective.SetMinimization();
 
             Solver.ResultStatus result = solver.Solve();
 
