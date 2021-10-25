@@ -38,7 +38,7 @@ namespace VaccinationScheduling.Online
                 verify[machine1].Add((tFirstJob, machines.freeRangesFirstJob.JobLength));
                 verify[machine2].Add((tSecondJob, machines.freeRangesSecondJob.JobLength));
 
-                Console.WriteLine(new Schedule(tFirstJob, machine1, tSecondJob, machine2));
+                Console.WriteLine(new Schedule(tFirstJob, machine1 + 1, tSecondJob, machine2 + 1));
             }
 
             // Verify the scheduled jobs do not overlap
