@@ -149,9 +149,8 @@ namespace VaccinationScheduling.Online
                 }
             }
 
-            Extensions.WriteDebugLine($"Best score {bestFirstJobScore.Item1 + bestSecondJobScore.Item1}");
-            Extensions.WriteDebugLine($"#1 Machine: {bestFirstJobScore.Item2} T:{bestFirstJobScore.Item3}");
-            Extensions.WriteDebugLine($"#2 Machine: {bestSecondJobScore.Item2} T:{bestSecondJobScore.Item3}");
+            // Extensions.WriteDebugLine($"Best score {bestFirstJobScore.Item1 + bestSecondJobScore.Item1}");
+            // Extensions.WriteDebugLine($"#1 Machine: {bestFirstJobScore.Item2} T:{bestFirstJobScore.Item3}  #2 Machine: {bestSecondJobScore.Item2} T:{bestSecondJobScore.Item3}");
             return (bestFirstJobScore.Item2, bestSecondJobScore.Item2, bestFirstJobScore.Item3, bestSecondJobScore.Item3);
         }
 
@@ -191,9 +190,9 @@ namespace VaccinationScheduling.Online
             freeRangesFirstJob.RemoveRange(tSecondJob - freeRangesFirstJob.JobLength + 1, tSecondJob + freeRangesSecondJob.JobLength - 1, secondMachineNr);
             freeRangesSecondJob.RemoveRange(tFirstJob - freeRangesSecondJob.JobLength + 1, tFirstJob + freeRangesFirstJob.JobLength - 1, firstMachineNr);
 
-            Extensions.WriteDebugLine("Added to both trees!");
-            Extensions.WriteDebugLine(freeRangesFirstJob);
-            Extensions.WriteDebugLine(freeRangesSecondJob);
+            //Extensions.WriteDebugLine("Added to both trees!");
+            //Extensions.WriteDebugLine(freeRangesFirstJob);
+            //Extensions.WriteDebugLine(freeRangesSecondJob);
         }
     }
 }

@@ -29,9 +29,10 @@ namespace VaccinationScheduling.Online.List
             Add(i);
         }
 
-        public SetList(List<uint> set)
+        public SetList(List<uint> set, int count)
         {
             Set = set;
+            Count = count;
         }
 
         // Sources listed above, used to find which bit index is different
@@ -81,7 +82,7 @@ namespace VaccinationScheduling.Online.List
                     uint c = Set[i] ^ setList.Set[i];
                     int result = getIndex(c);
                     bool isCurrentList = (Set[i] & masks[result]) != 0;
-                    return (isCurrentList, result);
+                    return (isCurrentList, i * 32 + result);
                 }
             }
             // No difference found
@@ -94,13 +95,13 @@ namespace VaccinationScheduling.Online.List
             {
                 uint c = Set[maxCommonIndex + 1];
                 int result = getIndex(c);
-                return (true, result);
+                return (true, (maxCommonIndex + 1) * 32 + result);
             }
             else
             {
                 uint c = setList.Set[maxCommonIndex + 1];
                 int result = getIndex(c);
-                return (false, result);
+                return (false, (maxCommonIndex + 1) * 32 + result);
             }
         }
 
@@ -114,8 +115,8 @@ namespace VaccinationScheduling.Online.List
                 {
                     uint c = Set[i] ^ uint.MaxValue;
                     int result = getIndex(c);
-                    Extensions.WriteDebugLine("Found non used machine:" + result);
-                    return result;
+                    //Extensions.WriteDebugLine("Found non used machine:" + result);
+                    return i * 32 + result;
                 }
             }
             // The first machine that is not contained
@@ -146,7 +147,7 @@ namespace VaccinationScheduling.Online.List
         // Clone the set
         public SetList Clone()
         {
-            return new SetList(new List<uint>(Set));
+            return new SetList(new List<uint>(Set), Count);
         }
 
         // Convert the set to a string containing all the numbers that are not contained

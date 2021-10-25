@@ -144,18 +144,24 @@ namespace VaccinationScheduling.Online.Tree
 
         public void RemoveRange(int tStartRange, int tEndRange, int machineNr)
         {
+            //verifyTree();
             bool foundBeforeStart = false;
             bool mergeRangeAfter = false;
 
             // tree --3 4-6-8 -10-- 13-- ------ -----
-            IEnumerator<Range> ranges = FastEnumerateRange(tStartRange, tEndRange).GetEnumerator();
-            Range range = null;
-            while (ranges.MoveNext())
+            IEnumerator<Range> rangesEnum = FastEnumerateRange(tStartRange, tEndRange).GetEnumerator();
+            List<Range> ranges = new List<Range>();
+            while(rangesEnum.MoveNext())
             {
-                range = ranges.Current;
+                ranges.Add(rangesEnum.Current);
+            }
+
+            Range range = null;
+            for (int i = 0; i < ranges.Count; i++)
+            {
+                range = ranges[i];
                 if (range.NotList.Contains(machineNr))
                 {
-                    MergeRangeBefore(range);
                     continue;
                 }
                 // Last range item
@@ -183,7 +189,7 @@ namespace VaccinationScheduling.Online.Tree
                     //      --
                     //        -----(Not x)
                     //             ------INF
-                    if (tStartRange > range.Start)
+                    else if (tStartRange > range.Start)
                     {
                         range.EndMaybe = tStartRange - 1;
                         SetList sl = new SetList(machineNr);
@@ -219,7 +225,7 @@ namespace VaccinationScheduling.Online.Tree
                 else if(rangeStart == range.Start)
                 {
                     int oldEnd = (int)range.EndMaybe;
-                    range.EndMaybe = rangeEnd;
+                        range.EndMaybe = rangeEnd;
                     Insert(new Range(rangeEnd + 1, oldEnd, range.NotList.Clone()));
                     range.NotList.Add(machineNr);
                     if (!foundBeforeStart)
@@ -269,6 +275,7 @@ namespace VaccinationScheduling.Online.Tree
             }
 
             MergeRangeAfter(range);
+            verifyTree();
         }
 
         public void MergeRangeBefore(Range range)
@@ -398,7 +405,7 @@ namespace VaccinationScheduling.Online.Tree
         /// <exception cref="InvalidOperationException">The tree has an item added or deleted during the enumeration.</exception>
         private IEnumerable<Range> FastEnumerateRangeInOrder(int first, int last, Node root)
         {
-            Stack<(CommandType, Node, bool, bool)> stack = new Stack<(CommandType, Node, bool, bool)>();
+            Stack<(CommandType, Node, bool, bool, bool)> stack = new Stack<(CommandType, Node, bool, bool, bool)>();
             RangeTester rangeTester = DoubleBoundedRangeTester(first, last);
             Node current = root;
             int compare = 1;
@@ -426,14 +433,15 @@ namespace VaccinationScheduling.Online.Tree
                 yield break;
             }
 
-            stack.Push((CommandType.ExpandAndYield, current, true, true));
+            stack.Push((CommandType.ExpandAndYield, current, true, true, true));
             CommandType commandType;
             bool parentInRange;
             bool isLeftChild;
+            bool isRoot;
             // Now we can enumerate the stack left from the root
             while (stack.Count != 0)
             {
-                (commandType, current, parentInRange, isLeftChild) = stack.Pop();
+                (commandType, current, parentInRange, isLeftChild, isRoot) = stack.Pop();
 
                 // Current is null
                 if (current == null)
@@ -450,12 +458,12 @@ namespace VaccinationScheduling.Online.Tree
                 {
                     if (current.right != null)
                     {
-                        stack.Push((CommandType.ExpandAndYield, current.right, true, false));
+                        stack.Push((CommandType.ExpandAndYield, current.right, true, false, false));
                     }
-                    stack.Push((CommandType.Yield, current, true, true));
+                    stack.Push((CommandType.Yield, current, true, true, false));
                     if (current.left != null)
                     {
-                        stack.Push((CommandType.ExpandAndYield, current.left, true, false));
+                        stack.Push((CommandType.ExpandAndYield, current.left, true, false, false));
                     }
                 }
                 // We need to expand to get the next item
@@ -466,35 +474,35 @@ namespace VaccinationScheduling.Online.Tree
                         compare = rangeTester(current.right.item);
                         if (compare == 0)
                         {
-                            if (parentInRange && isLeftChild)
-                                stack.Push((CommandType.FreeExpand, current.right, true, false));
+                            if (parentInRange && isLeftChild && !isRoot)
+                                stack.Push((CommandType.FreeExpand, current.right, true, false, false));
                             else
-                                stack.Push((CommandType.ExpandAndYield, current.right, true, false));
+                                stack.Push((CommandType.ExpandAndYield, current.right, true, false, false));
                         }
                         // Right item is too big
                         else if (compare > 0)
                         {
-                            stack.Push((CommandType.ExpandLeft, current.right, true, false));
+                            stack.Push((CommandType.ExpandLeft, current.right, true, false, false));
                         }
                     }
 
-                    stack.Push((CommandType.Yield, current, true, true));
+                    stack.Push((CommandType.Yield, current, true, true, false));
 
                     if (current.left != null)
                     {
                         compare = rangeTester(current.left.item);
                         if (compare == 0)
                         {
-                            if (parentInRange && !isLeftChild)
-                                stack.Push((CommandType.FreeExpand, current.left, true, true));
+                            if (parentInRange && !isLeftChild && !isRoot)
+                                stack.Push((CommandType.FreeExpand, current.left, true, true, false));
                             else
-                                stack.Push((CommandType.ExpandAndYield, current.left, true, true));
+                                stack.Push((CommandType.ExpandAndYield, current.left, true, true, false));
                         }
                         // Left item is too small
                         else if (compare < 0)
                         {
                             // We still want to check
-                            stack.Push((CommandType.ExpandRight, current.left, true, true));
+                            stack.Push((CommandType.ExpandRight, current.left, true, true, false));
                         }
                     }
                 }
@@ -504,11 +512,11 @@ namespace VaccinationScheduling.Online.Tree
                     {
                         if (current.right.item.CompareTo(first) < 0)
                         {
-                            stack.Push((CommandType.ExpandRight, current.right, false, false));
+                            stack.Push((CommandType.ExpandRight, current.right, false, false, false));
                         }
                         else
                         {
-                            stack.Push((CommandType.ExpandAndYield, current.right, false, false));
+                            stack.Push((CommandType.ExpandAndYield, current.right, false, false, false));
                         }
                     }
                 }
@@ -518,21 +526,48 @@ namespace VaccinationScheduling.Online.Tree
                     {
                         if (current.left.item.CompareTo(last) > 0)
                         {
-                            stack.Push((CommandType.ExpandLeft, current.left, false, true));
+                            stack.Push((CommandType.ExpandLeft, current.left, false, true, false));
                         }
                         else
                         {
-                            stack.Push((CommandType.ExpandAndYield, current.left, false, true));
+                            stack.Push((CommandType.ExpandAndYield, current.left, false, true, false));
                         }
                     }
                 }
             }
         }
 
+        public void verifyTree()
+        {
+            IEnumerator<Range> rangesEnum = FastEnumerateRange(0, int.MaxValue).GetEnumerator();
+            List<Range> ranges = new List<Range>();
+            while (rangesEnum.MoveNext())
+            {
+                ranges.Add(rangesEnum.Current);
+            }
+
+            if (ranges[0].Start != 0)
+            {
+                throw new Exception("Range has to start with 0");
+            }
+            for (int i = 1; i < ranges.Count; i++)
+            {
+                Range range = ranges[i];
+                if (ranges[i].Start - 1 != ranges[i-1].EndMaybe)
+                {
+                    throw new Exception($"Ranges do not match at {range.Start}");
+                }
+                if (ranges[i-1].EndMaybe == null)
+                {
+                    throw new Exception($"Several infinities");
+                }
+            }
+        }
+
+
         public override string ToString()
         {
             StringBuilder sb = new();
-            //foreach (Range range in FastEnumerateRange(0, -1))
             foreach (Range range in EnumerateRange(0, null))
             {
                 sb.Append(range);

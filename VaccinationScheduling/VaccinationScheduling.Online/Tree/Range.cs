@@ -10,12 +10,51 @@ namespace VaccinationScheduling.Online.Tree
         /// <summary>
         /// Start time
         /// </summary>
-        public int Start;
+        public int Start
+        {
+            get => start;
+            set
+            {
+                if (endMaybe == null)
+                {
+                    start = value;
+                }
+                else if (start > endMaybe)
+                {
+                    throw new ArgumentOutOfRangeException("StartTime cannot be higher than the endTime");
+                }
+                else
+                {
+                    start = value;
+                }
+            }
+        }
 
         /// <summary>
         /// End time
         /// </summary>
-        public int? EndMaybe;
+        public int? EndMaybe
+        {
+            get => endMaybe;
+            set
+            {
+                if (value == null)
+                {
+                    endMaybe = null;
+                }
+                else if (value < start)
+                {
+                    throw new ArgumentOutOfRangeException("EndTime cannot be lower than the startTime");
+                }
+                else
+                {
+                    endMaybe = value;
+                }
+            }
+        }
+
+        private int start;
+        private int? endMaybe;
 
         public SetList NotList = new SetList();
 
@@ -26,21 +65,21 @@ namespace VaccinationScheduling.Online.Tree
         /// <param name="end"></param>
         public Range(int start, int? end)
         {
-            Start = start;
-            EndMaybe = end;
+            this.start = start;
+            this.endMaybe = end;
         }
 
         public Range(int start, int? end, SetList notList)
         {
-            Start = start;
-            EndMaybe = end;
+            this.start = start;
+            this.endMaybe = end;
             NotList = notList;
         }
 
         public (int, int?)? GetOverlap(int tStart, int? tEnd)
         {
             // Check for overlap
-            bool overlap = (EndMaybe == null || tStart < EndMaybe) && Start < tEnd;
+            bool overlap = (endMaybe == null || tStart < endMaybe) && Start < tEnd;
             if (!overlap) return null;
 
             // There is overlapping range
