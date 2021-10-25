@@ -15,14 +15,12 @@ namespace VaccinationScheduling.Online
         {
             Global global = ReadUtils.ReadGlobal();
             JobEnumerable jobs = new(global);
-            Machines machines = new Machines(global);
+            Machines machines = new(global);
 
-            List<List<(int, int)>> verify = new List<List<(int, int)>>();
-            int machine1, machine2, tFirstJob, tSecondJob;
+            List<List<(int, int)>> verify = new();
             foreach (Job job in jobs)
             {
-
-                (machine1, machine2, tFirstJob, tSecondJob) = machines.FindGreedySpot(job);
+                (int machine1, int machine2, int tFirstJob, int tSecondJob) = machines.FindGreedySpot(job);
                 machines.ScheduleJobs(machine1, machine2, tFirstJob, tSecondJob);
                 // Verify the solution (Only temporary)
                 if (machine1 >= verify.Count || machine2 >= verify.Count)
@@ -34,11 +32,13 @@ namespace VaccinationScheduling.Online
                     verify[machine1] = new List<(int, int)>();
                 }
                 if (verify[machine2].Count == 0)
-                {
+                {   
                     verify[machine2] = new List<(int, int)>();
                 }
                 verify[machine1].Add((tFirstJob, machines.freeRangesFirstJob.JobLength));
                 verify[machine2].Add((tSecondJob, machines.freeRangesSecondJob.JobLength));
+
+                Console.WriteLine(new Schedule(tFirstJob, machine1, tSecondJob, machine2));
             }
 
             // Verify the scheduled jobs do not overlap
@@ -62,7 +62,7 @@ namespace VaccinationScheduling.Online
                     minimumNextItem = verify[i][j].Item1 + verify[i][j].Item2;
                 }
             }
-            Console.WriteLine($"Number machines used:" + machines.NrMachines);
+            WriteDebugLine($"Number machines used:" + machines.NrMachines);
         }
     }
 }
