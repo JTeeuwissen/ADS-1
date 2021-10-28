@@ -56,6 +56,10 @@ namespace VaccinationScheduling.Online.Tree
         private int start;
         private int? endMaybe;
 
+        public int? MachineNrInBothNeighbours = null;
+        public int? InLeftItem = null;
+        public int? InRightItem = null;
+
         public SetList NotList = new SetList();
 
         /// <summary>
@@ -150,7 +154,11 @@ namespace VaccinationScheduling.Online.Tree
         public override string ToString()
         {
             string range = EndMaybe == null ? $"{Start}-INFINITY" : $"{Start}-{EndMaybe}";
-            return range + NotList.ToString();
+            string set = NotList.ToString();
+            string left = InLeftItem == null ? "" : " L:" + InLeftItem.ToString();
+            string middle = MachineNrInBothNeighbours == null ? "" : " M:" + MachineNrInBothNeighbours;
+            string right = InRightItem == null ? "" : " R:" + InRightItem.ToString();
+            return range + set + left + middle + right;
         }
     }
 }

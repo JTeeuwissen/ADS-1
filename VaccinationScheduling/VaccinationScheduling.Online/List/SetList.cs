@@ -1,11 +1,10 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Text;
-using VaccinationScheduling.Shared;
 
 namespace VaccinationScheduling.Online.List
 {
-    public class SetList
+    public class SetList : IEquatable<SetList>
     {
         // https://stackoverflow.com/questions/10453256/fast-way-to-find-a-intersection-between-two-sets-of-numbers-one-defined-by-a-bi
         // Method of finding the first: https://stackoverflow.com/questions/21279844/how-to-find-the-first-bit-that-is-different-in-c
@@ -41,33 +40,43 @@ namespace VaccinationScheduling.Online.List
             31, 27, 13, 23, 21, 19, 16, 7, 26, 12, 18, 6, 11, 5, 10, 9
         };
 
+        /// <summary>
+        /// Add a machine number to the set.
+        /// </summary>
+        /// <param name="machineNr">Machine to add</param>
         public void Add(int machineNr)
         {
             int listIndex = machineNr / 32;
             int bitIndex = machineNr % 32;
 
+            // Extend set if it is not big enough yet
             while (listIndex >= Set.Count)
             {
                 Set.Add(0);
             }
 
+            // If number is not yet added add it to the set
             if ((Set[listIndex] & masks[bitIndex]) == 0)
             {
                 Set[listIndex] += (uint)1 << bitIndex;
                 Count++;
-                // Extensions.WriteDebugLine($"Added {machineNr}:" + ToString());
             }
         }
 
-        public bool Contains(int i)
+        /// <summary>
+        /// Checks whether a machine number is contained in the set.
+        /// </summary>
+        /// <param name="machineNr">Number to find in the set</param>
+        /// <returns>Whether or not the number is contained in the </returns>
+        public bool Contains(int machineNr)
         {
-            if (i >= Set.Count * 32)
+            if (machineNr >= Set.Count * 32)
             {
                 return false;
             }
 
-            int listIndex = i / 32;
-            int bitIndex = i % 32;
+            int listIndex = machineNr / 32;
+            int bitIndex = machineNr % 32;
             return (Set[listIndex] & masks[bitIndex]) != 0;
         }
 
@@ -105,6 +114,60 @@ namespace VaccinationScheduling.Online.List
             }
         }
 
+        public int? FindItemInBothNeighbours(SetList leftSet, SetList rightSet)
+        {
+            int maxSurroundingIndex = Math.Min(leftSet.Set.Count, rightSet.Set.Count);
+            int maxCommonIndex = Math.Min(maxSurroundingIndex, Set.Count);
+            for (int i = 0; i < maxCommonIndex; i++)
+            {
+                if (leftSet.Set[i] == Set[i] || rightSet.Set[i] == Set[i])
+                {
+                    continue;
+                }
+                uint union = leftSet.Set[i] & rightSet.Set[i];
+                uint c = union & (~Set[i]);
+                // There is no value that is in both neighbours but not in the current
+                if (c == 0)
+                {
+                    continue;
+                }
+                return i * 32 + getIndex(c);
+            }
+            for (int i = maxCommonIndex; i < maxSurroundingIndex; i++)
+            {
+                uint union = leftSet.Set[i] & rightSet.Set[i];
+                // There is no value that is in both neighbours but not in the current
+                if (union == 0)
+                {
+                    continue;
+                }
+                return i * 32 + getIndex(union);
+            }
+
+            return null;
+        }
+
+        public int? FindFirstUniqueInOtherSet(SetList other)
+        {
+            int maxCommonIndex = Math.Min(Set.Count, other.Set.Count);
+            for (int i = 0; i < maxCommonIndex; i++)
+            {
+                uint c = other.Set[i] & (~Set[i]);
+                // There is no value that is in both neighbours but not in the current
+                if (c == 0)
+                {
+                    continue;
+                }
+                return i * 32 + getIndex(c);
+            }
+            // There is no index not in the other list
+            if (maxCommonIndex == other.Set.Count)
+            {
+                return null;
+            }
+            return maxCommonIndex * 32 + getIndex(other.Set[maxCommonIndex]);
+        }
+
         public int FindFirstNotContained()
         {
             // Loop through the entire 'set'
@@ -126,22 +189,6 @@ namespace VaccinationScheduling.Online.List
         private int getIndex(uint c)
         {
             return MultiplyDeBruijnBitPosition[((UInt32)((c & -c) * 0x077CB531U)) >> 27];
-        }
-
-        public bool AreEqual(SetList setList)
-        {
-            if (Set.Count != setList.Set.Count)
-            {
-                return false;
-            }
-            for (int i = 0; i < Set.Count; i++)
-            {
-                if (Set[i] != setList.Set[i])
-                {
-                    return false;
-                }
-            }
-            return true;
         }
 
         // Clone the set
@@ -171,6 +218,26 @@ namespace VaccinationScheduling.Online.List
             }
 
             return " Not(" + sb.ToString() + ")";
+        }
+
+        public bool Equals(SetList? other)
+        {
+            if (other == null)
+            {
+                return false;
+            }
+            if (Set.Count != other.Set.Count)
+            {
+                return false;
+            }
+            for (int i = 0; i < Set.Count; i++)
+            {
+                if (Set[i] != other.Set[i])
+                {
+                    return false;
+                }
+            }
+            return true;
         }
     }
 }
