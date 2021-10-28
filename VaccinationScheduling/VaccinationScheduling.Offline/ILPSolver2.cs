@@ -28,39 +28,39 @@ namespace VaccinationScheduling.Offline
             for (int j = 0; j < jabCount; j++)
                 T[i,j] = model.NewIntVar(0, tMax, $"T_{i}_{j}");
 
-            // S[i,m,t,j] is an 4D array of booleans, which will be set to 1
+            // S[i,j,m,t] is an 4D array of booleans, which will be set to 1
             // if patient i takes timeslot t in hospital m for jab j.
             // ReSharper disable once InconsistentNaming
-            IntVar[,,,] S = new IntVar[iMax, mMax, tMax + 1, jabCount];
+            IntVar[,,,] S = new IntVar[iMax, jabCount, mMax, tMax + 1];
             for (int i = 0; i < iMax; i++)
-            for (int m = 0; m < mMax; m++)
             for (int j = 0; j < jabCount; j++)
+            for (int m = 0; m < mMax; m++)
             {
-                S[i, m, 0, j] = model.NewIntVar(0 , 0, $"S_{i}_{m}_{0}_{j}");
+                S[i, j, m, 0] = model.NewIntVar(0 , 0, $"S_{i}_{j}_{m}_{0}");
                 for (int t = 1; t <= tMax; t++)
-                    S[i, m, t, j] = model.NewBoolVar($"S_{i}_{m}_{t}_{j}");
+                    S[i, j, m, t] = model.NewBoolVar($"S_{i}_{j}_{m}_{t}");
             }
 
-            // C[i,m,t,j] is an 4D array of booleans,
-            // which maps only the start of the sequence of 1's in S[i,m,t,j]
+            // C[i,j,m,t] is an 4D array of booleans,
+            // which maps only the start of the sequence of 1's in S[i,j,m,t]
             // for each patient i for jab j in hospital m.
             // ReSharper disable once InconsistentNaming
-            IntVar[,,,] C = new IntVar[iMax, mMax, tMax + 1, jabCount];
+            IntVar[,,,] C = new IntVar[iMax, jabCount, mMax, tMax + 1];
             for (int i = 0; i < iMax; i++)
+            for (int j = 0; j < jabCount; j++)
             for (int m = 0; m < mMax; m++)
             for (int t = 0; t <= tMax; t++)
-            for (int j = 0; j < jabCount; j++)
-                C[i, m, t, j] = model.NewBoolVar($"C_{i}_{m}_{t}_{j}");
+                C[i, j, m, t] = model.NewBoolVar($"C_{i}_{j}_{m}_{t}");
 
-            // A[m] is an array of booleans,
+            // M[m] is an array of booleans,
             // which will be set to 1 if hospital m is used.
             // ReSharper disable once InconsistentNaming
-            IntVar[] A = new IntVar[mMax];
+            IntVar[] M = new IntVar[mMax];
             for (int m = 0; m < mMax; m++)
-                A[m] = model.NewBoolVar($"A_{m}");
+                M[m] = model.NewBoolVar($"M_{m}");
 
             // Minimize the sum of all used machines.
-            model.Minimize(LinearExpr.Sum(A));
+            model.Minimize(LinearExpr.Sum(M));
 
             // Set the constraints.
 
@@ -82,7 +82,7 @@ namespace VaccinationScheduling.Offline
             {
                 IntVar[] acc = new IntVar[mMax * (tMax + 1)];
                 for (int m = 0; m < mMax; m++)
-                for (int t = 0; t <= tMax; t++) acc[m * tMax + t + m] = S[i, m, t, j];
+                for (int t = 0; t <= tMax; t++) acc[m * tMax + t + m] = S[i, j, m, t];
 
                 model.Add(LinearExpr.Sum(acc) == doses[j]);
             }
@@ -93,7 +93,7 @@ namespace VaccinationScheduling.Offline
             {
                 IntVar[] acc = new IntVar[iMax * jabCount];
                 for (int i = 0; i < iMax; i++)
-                for (int j = 0; j < jabCount; j++) acc[i * jabCount + j] = S[i, m, t, j];
+                for (int j = 0; j < jabCount; j++) acc[i * jabCount + j] = S[i, j, m, t];
 
                 model.Add(LinearExpr.Sum(acc) <= 1);
             }
@@ -105,17 +105,17 @@ namespace VaccinationScheduling.Offline
                 for (int i = 0; i < iMax; i++)
                 for (int j = 0; j < jabCount; j++)
                 for (int t = 0; t <= tMax; t++)
-                    acc[i * jabCount * tMax + j * tMax + t + j] = S[i, m, t, j];
+                    acc[i * jabCount * tMax + j * tMax + t + j] = S[i, j, m, t];
 
-                model.Add(LinearExpr.Sum(acc) <= (iMax * jabCount * (tMax + 1)) * A[m]);
+                model.Add(LinearExpr.Sum(acc) <= (iMax * jabCount * (tMax + 1)) * M[m]);
             }
 
             // Maps the start of each jab of schedule S to C.
             for (int i = 0; i < iMax; i++)
-            for (int m = 0; m < mMax; m++)
             for (int j = 0; j < jabCount; j++)
+            for (int m = 0; m < mMax; m++)
             for (int t = 1; t <= tMax; t++)
-                model.Add(C[i, m, t, j] >= S[i, m, t, j] - S[i, m, t - 1, j]);
+                model.Add(C[i, j, m, t] >= S[i, j, m, t] - S[i, j, m, t - 1]);
 
             // For each jab of each patient, only one sequence of 1's must exist.
             for (int i = 0; i < iMax; i++)
@@ -124,7 +124,7 @@ namespace VaccinationScheduling.Offline
                 IntVar[] acc = new IntVar[mMax * (tMax + 1)];
                 for (int m = 0; m < mMax; m++)
                 for (int t = 0; t <= tMax; t++)
-                    acc[m * tMax + t + m] = C[i, m, t, j];
+                    acc[m * tMax + t + m] = C[i, j, m, t];
 
                 model.Add(LinearExpr.Sum(acc) == 1);
             }
@@ -136,7 +136,7 @@ namespace VaccinationScheduling.Offline
                 LinearExpr[] exp = new LinearExpr[mMax * (tMax + 1)];
                 for (int m = 0; m < mMax; m++)
                 for (int t = 0; t <= tMax; t++)
-                    exp[m * tMax + t + m] = LinearExpr.Prod(C[i, m, t, j], t);
+                    exp[m * tMax + t + m] = LinearExpr.Prod(C[i, j, m, t], t);
 
                 model.Add(LinearExpr.Sum(exp) == T[i, j]);
             }
@@ -150,7 +150,8 @@ namespace VaccinationScheduling.Offline
             if (status is CpSolverStatus.Infeasible)
                 throw new Exception("The problem does not have an optimal solution!");
 
-            Extensions.WriteDebugLine($"Total cost: {solver.ObjectiveValue}\n");
+            Extensions.WriteDebugLine("Solution:");
+            Extensions.WriteDebugLine("Objective value = " + solver.ObjectiveValue);
 
             (int t1, int t2) GetJabTime(int i)
             {
@@ -166,9 +167,9 @@ namespace VaccinationScheduling.Offline
                 for (int m = 0; m < mMax; m++)
                 for (int t = 0; t <= tMax; t++)
                 {
-                    if (solver.Value(S[i, m, t, 0]) == 1)
+                    if (solver.Value(S[i, 0, m, t]) == 1)
                         m1 = m;
-                    if (solver.Value(S[i, m, t, 1]) == 1)
+                    if (solver.Value(S[i, 1, m, t]) == 1)
                         m2 = m;
                 }
                 return ((int)m1!, (int)m2!);

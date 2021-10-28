@@ -9,7 +9,7 @@ namespace VaccinationScheduling.Online.Tree
 {
     public partial class RedBlackTree : IEnumerable<Range>
     {
-        public int JobLength = 0;
+        public int JabLength = 0;
 
         /// <summary>
         /// Finds the key in the tree. If multiple items in the tree have
