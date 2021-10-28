@@ -5,10 +5,13 @@ using VaccinationScheduling.Online.List;
 
 namespace VaccinationScheduling.Online.Tree
 {
+    /// <summary>
+    /// Range consisting out of a start annd enttime. When endttime is null it has no maximum and so goes to 'infinity'
+    /// </summary>
     public class Range : IComparable<int>, IComparable<Range>
     {
         /// <summary>
-        /// Start time
+        /// Start time, makes sure the starttime cannot be higher than the endtime when set.
         /// </summary>
         public int Start
         {
@@ -31,7 +34,7 @@ namespace VaccinationScheduling.Online.Tree
         }
 
         /// <summary>
-        /// End time
+        /// End time, make sure the end time cannot be lower than the starttime.
         /// </summary>
         public int? EndMaybe
         {
@@ -53,14 +56,17 @@ namespace VaccinationScheduling.Online.Tree
             }
         }
 
+        // Start of the range
         private int start;
         private int? endMaybe;
 
+        // For sticky greedy the neighbours are precomputed.
         public int? MachineNrInBothNeighbours = null;
         public int? InLeftItem = null;
         public int? InRightItem = null;
 
-        public SetList NotList = new SetList();
+        // Set containing what machines are unavailable at the current range.
+        public CustomSet OccupiedMachineNrs = new CustomSet();
 
         /// <summary>
         /// Create a range object. The range is where there is no job.
@@ -73,13 +79,25 @@ namespace VaccinationScheduling.Online.Tree
             this.endMaybe = end;
         }
 
-        public Range(int start, int? end, SetList notList)
+        /// <summary>
+        /// Create a range object initialized with a set.
+        /// </summary>
+        /// <param name="start">Starttime</param>
+        /// <param name="end">EndTime of range</param>
+        /// <param name="occupiedMachineNrs">Machines that are occupied at the moment</param>
+        public Range(int start, int? end, CustomSet occupiedMachineNrs)
         {
             this.start = start;
             this.endMaybe = end;
-            NotList = notList;
+            OccupiedMachineNrs = occupiedMachineNrs;
         }
 
+        /// <summary>
+        /// Gets the overlap between the current range and the range given to the
+        /// </summary>
+        /// <param name="tStart"></param>
+        /// <param name="tEnd"></param>
+        /// <returns>Returns the overlap between both items.</returns>
         public (int, int?)? GetOverlap(int tStart, int? tEnd)
         {
             // Check for overlap
@@ -88,6 +106,17 @@ namespace VaccinationScheduling.Online.Tree
 
             // There is overlapping range
             return (Math.Max(Start, tStart), EndMaybe is {} end ? Math.Min(end, (int)tEnd) : tEnd);
+        }
+
+        /// <summary>
+        /// Get the overlap between the current range and the start and end.
+        /// </summary>
+        /// <param name="tStart">Start of the range to get overlap of</param>
+        /// <param name="tEnd">End of the range to get overlap of</param>
+        /// <returns>The overlap between the two ranges.</returns>
+        public (int, int) GetOverlap(int tStart, int tEnd)
+        {
+            return (Math.Max(Start, tStart), EndMaybe is {} end ? Math.Min(end, tEnd) : tEnd);
         }
 
         /// <summary>
@@ -154,7 +183,7 @@ namespace VaccinationScheduling.Online.Tree
         public override string ToString()
         {
             string range = EndMaybe == null ? $"{Start}-INFINITY" : $"{Start}-{EndMaybe}";
-            string set = NotList.ToString();
+            string set = OccupiedMachineNrs.ToString();
             string left = InLeftItem == null ? "" : " L:" + InLeftItem.ToString();
             string middle = MachineNrInBothNeighbours == null ? "" : " M:" + MachineNrInBothNeighbours;
             string right = InRightItem == null ? "" : " R:" + InRightItem.ToString();

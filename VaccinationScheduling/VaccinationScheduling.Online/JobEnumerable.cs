@@ -13,6 +13,7 @@ namespace VaccinationScheduling.Online
             _global = global;
         }
 
+        // Get the enumerator used in a foreach loop.
         public IEnumerator<Job> GetEnumerator()
         {
             while (true)
