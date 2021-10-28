@@ -31,10 +31,10 @@ namespace VaccinationScheduling.Online
                 (int machine1, int machine2, int tFirstJab, int tSecondJab) = machines.FindGreedySpot(job);
                 //(machine1, machine2, tFirstJob, tSecondJob) = machines.FindSmartGreedySpot(job);
                 // Verify the current machine
-/*                if (tFirstJob < job.MinFirstIntervalStart || tFirstJob > job.MaxFirstIntervalStart || tFirstJob + job.MinGapIntervalStarts > tSecondJob || tFirstJob + job.MaxGapIntervalStarts < tSecondJob)
-                {
-                    throw new Exception("Illegal scheduling!");
-                }*/
+                //if (tFirstJob < job.MinFirstIntervalStart || tFirstJob > job.MaxFirstIntervalStart || tFirstJob + job.MinGapIntervalStarts > tSecondJob || tFirstJob + job.MaxGapIntervalStarts < tSecondJob)
+                //{
+                //    throw new Exception("Illegal scheduling!");
+                //}
                 machines.ScheduleJobs(machine1, machine2, tFirstJab, tSecondJab);
                 Console.WriteLine((machine1, machine2, tFirstJab, tSecondJab));
                 // Verify the solution (Only temporary)
@@ -53,7 +53,7 @@ namespace VaccinationScheduling.Online
                 verify[machine1].Add((tFirstJab, machines.freeRangesFirstJab.JabLength));
                 verify[machine2].Add((tSecondJab, machines.freeRangesSecondJab.JabLength));
 
-                Console.WriteLine(new Schedule(tFirstJob, machine1 + 1, tSecondJob, machine2 + 1));
+                Console.WriteLine(new Schedule(tFirstJob, machine1 + 1, tSecondJob, machine2 + 1));*/
             }
 
 /*            StringBuilder visualisation = new StringBuilder();
@@ -77,7 +77,7 @@ namespace VaccinationScheduling.Online
                     visualisation.Append('$', verify[i][j].Item2);
                     minimumNextItem = verify[i][j].Item1 + verify[i][j].Item2;
                 }
-            }
+            }*/
             WriteDebugLine($"Number machines used:" + machines.NrMachines);
         }
     }

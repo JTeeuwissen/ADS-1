@@ -33,8 +33,8 @@ namespace VaccinationScheduling.Online
         // Finds the first available spot inside the range.
         public (int, int, int, int) FindGreedySpot(Job job)
         {
-            IEnumerator<Range> firstJabEnumerate = freeRangesFirstJab.EnumerateRange(job.MinFirstIntervalStart, job.MaxFirstIntervalStart).GetEnumerator();
-            IEnumerator<Range> secondJabEnumerate = freeRangesSecondJab.EnumerateRange(job.MinFirstIntervalStart + job.MinGapIntervalStarts, job.MaxFirstIntervalStart + job.MaxGapIntervalStarts).GetEnumerator();
+            IEnumerator<Range> firstJabEnumerate = freeRangesFirstJab.FastEnumerateRange(job.MinFirstIntervalStart, job.MaxFirstIntervalStart).GetEnumerator();
+            IEnumerator<Range> secondJabEnumerate = freeRangesSecondJab.FastEnumerateRange(job.MinFirstIntervalStart + job.MinGapIntervalStarts, job.MaxFirstIntervalStart + job.MaxGapIntervalStarts).GetEnumerator();
 
             List<(Range, int)> secondRanges = new();
             int slidingWindowIndex = 0;
@@ -52,7 +52,7 @@ namespace VaccinationScheduling.Online
                     break;
 
                 bool expandCache = true;
-                Range firstJab = firstJobEnumerate.Current;
+                Range firstJab = firstJabEnumerate.Current;
 
                 // Score is 0 if it does not fit, otherwise 1
                 int firstJabScore = firstJab.NotList.Count == NrMachines ? 0 : 1;
@@ -135,13 +135,13 @@ namespace VaccinationScheduling.Online
                 }
             }
 
-            return (bestFirstJobScore.Item2, bestSecondJobScore.Item2, bestFirstJobScore.Item3, bestSecondJobScore.Item3);
+            return (bestFirstJabScore.Item2, bestSecondJabScore.Item2, bestFirstJabScore.Item3, bestSecondJabScore.Item3);
         }
 
         private List<Range> EnumerateToList(int tMin, int tMax, bool firstJab)
         {
             List<Range> firstJobs = new List<Range>();
-            RedBlackTree tree = firstJab ? freeRangesFirstJob : freeRangesSecondJob;
+            RedBlackTree tree = firstJab ? freeRangesFirstJab : freeRangesSecondJab;
 
             foreach (Range range in tree.FastEnumerateRange(tMin, tMax))
             {
