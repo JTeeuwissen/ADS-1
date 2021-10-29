@@ -90,7 +90,8 @@ namespace VaccinationScheduling.Online.Tree
         /// <param name="leftBound">Leftbound of the range to mark occupied</param>
         /// <param name="rightBound">Rightbound of the range to mark occupied</param>
         /// <param name="machineNr">MachineNr that gets occupied in the given range</param>
-        public void MarkRangeOccupied(BigInteger leftBound, BigInteger rightBound, int machineNr)
+        /// <param name="updateNeighbours">When running the sticky greedy algorithm it needs to update neighbours</param>
+        public void MarkRangeOccupied(BigInteger leftBound, BigInteger rightBound, int machineNr, bool updateNeighbours)
         {
             // Booleans to merge the first and last range item if needed.
             bool foundBeforeStart = false;
@@ -231,7 +232,11 @@ namespace VaccinationScheduling.Online.Tree
                 mergeWithNextRange(range);
             }
 
-            //UpdateUniqueItemsInNeighbours(initialRangeStart, initialRangeEnd);
+            // Needs to update neighbours in case of the sticky algorithm. So it has the machineNr precomputed.
+            if (updateNeighbours)
+            {
+                UpdateUniqueItemsInNeighbours(initialRangeStart, initialRangeEnd);
+            }
         }
 
         /// <summary>
@@ -261,6 +266,12 @@ namespace VaccinationScheduling.Online.Tree
                 {
                     continue;
                 }
+                if (first.Start == 0)
+                {
+                    first.MachineNrInBothNeighbours = null;
+                    first.InLeftItem = null;
+                    first.InRightItem = first.OccupiedMachineNrs.FindFirstUniqueInOtherSet(second.OccupiedMachineNrs);
+                }
 
                 // The range has a length of 1, so it can be a perfect flush spot to put a job in.
                 if (second.Start == second.EndMaybe)
@@ -289,12 +300,6 @@ namespace VaccinationScheduling.Online.Tree
                 second.MachineNrInBothNeighbours = null;
                 second.InLeftItem = null;
                 second.InRightItem = second.OccupiedMachineNrs.FindFirstUniqueInOtherSet(third.OccupiedMachineNrs);
-            }
-            else if (first.Start == 0)
-            {
-                first.MachineNrInBothNeighbours = null;
-                first.InLeftItem = null;
-                first.InRightItem = first.OccupiedMachineNrs.FindFirstUniqueInOtherSet(second.OccupiedMachineNrs);
             }
         }
 
@@ -329,12 +334,12 @@ namespace VaccinationScheduling.Online.Tree
             {
                 return result;
             }
-            result = Find((int)result.EndMaybe + 1);
+            result = Find((BigInteger)result.EndMaybe + 1);
             if (result.EndMaybe == null)
             {
                 return result;
             }
-            return Find((int)result.EndMaybe + 1);
+            return Find((BigInteger)result.EndMaybe + 1);
         }
 
         /// <summary>

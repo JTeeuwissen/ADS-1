@@ -1,7 +1,6 @@
 ﻿using System;
 using System.Numerics;
-using VaccinationScheduling.Shared;
-using VaccinationScheduling.Shared.BigNumber;
+using VaccinationScheduling.Shared.BigNumbers;
 using static VaccinationScheduling.Shared.Extensions;
 
 namespace VaccinationScheduling.Online
@@ -13,22 +12,38 @@ namespace VaccinationScheduling.Online
         /// </summary>
         public static void Main()
         {
+            // Choose algorithm
+            bool useStickyAlgorithm = true;
+
             BigGlobal global = BigReadUtils.ReadGlobal();
             JobEnumerable jobs = new(global);
             Machines machines = new(global);
 
+            int machine1, machine2;
+            BigInteger tFirstJab, tSecondJab;
             // Go through each job one by one
             foreach (BigJob job in jobs)
             {
                 // Finds a spot and returns the machine numbers and timestamps
-                (int machine1, int machine2, BigInteger tFirstJab, BigInteger tSecondJab) = machines.FindGreedySpot(job);
-                machines.ScheduleJobs(machine1, machine2, tFirstJab, tSecondJab);
-                // Print where the job is scheduled
-                Console.WriteLine(new Schedule(machine1, machine2, tFirstJab, tSecondJab));
+                if (useStickyAlgorithm)
+                {
+                    // Use sticky greedy algorithm
+                    (machine1, machine2, tFirstJab, tSecondJab) = machines.FindStickyGreedySpot(job);
+                }
+                else
+                {
+                    // Use greedy algorithm
+                    (machine1, machine2, tFirstJab, tSecondJab) = machines.FindGreedySpots(job);
+                }
+
+                // Update the tree with the given schedules.
+                machines.ScheduleJobs(machine1, machine2, tFirstJab, tSecondJab, useStickyAlgorithm);
+                // Print output to console
+                Console.WriteLine(new BigSchedule(machine1, machine2, tFirstJab, tSecondJab));
             }
 
             // Output the amount of machines used
-            WriteDebugLine($"Number machines used:" + machines.NrMachines);
+            WriteDebugLine($"{machines.NrMachines} machines");
         }
     }
 }

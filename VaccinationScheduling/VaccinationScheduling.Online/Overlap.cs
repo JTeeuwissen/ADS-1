@@ -1,9 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Numerics;
-using System.Text;
-using System.Threading.Tasks;
+﻿using System.Numerics;
 using Range = VaccinationScheduling.Online.Tree.Range;
 
 namespace VaccinationScheduling.Online
@@ -40,9 +35,6 @@ namespace VaccinationScheduling.Online
                 OverlapStart = tStart;
             }
 
-            // Bool identifiyng whether a flush spot exists
-            Length1 = range.Start == range.EndMaybe;
-
             // Endtime of overlap cannot cannot be equal if range goes to infinity or is higher
             if (range.EndMaybe == null)
             {
@@ -58,7 +50,7 @@ namespace VaccinationScheduling.Online
             else
             {
                 EndOverlaps = range.InRightItem != null;
-                OverlapEnd = (int)range.EndMaybe;
+                OverlapEnd = (BigInteger)range.EndMaybe;
             }
 
             // Range can be of length two, then bothpossible times it can be scheduled at are next to another job on the same machine.
@@ -67,6 +59,9 @@ namespace VaccinationScheduling.Online
                 EndOverlaps = true;
                 StartOverlaps = true;
             }
+
+            // Bool identifiyng whether a flush spot exists
+            Length1 = OverlapStart == OverlapEnd;
         }
     }
 }

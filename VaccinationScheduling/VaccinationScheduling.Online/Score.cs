@@ -1,11 +1,9 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-
-namespace VaccinationScheduling.Online
+﻿namespace VaccinationScheduling.Online
 {
+    /// <summary>
+    /// Score values for the sticky algorithm
+    /// It always prefers to schedule both on an existing machine. But after that prefers jabs to be neighbouring an existing jab on that same machine.
+    /// </summary>
     public enum Score
     {
         NEWMACHINE = 10,

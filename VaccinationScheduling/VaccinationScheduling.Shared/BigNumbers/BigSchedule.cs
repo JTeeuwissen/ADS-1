@@ -1,6 +1,8 @@
-﻿namespace VaccinationScheduling.Shared
+﻿using System.Numerics;
+
+namespace VaccinationScheduling.Shared.BigNumbers
 {
-    public class Schedule
+    public class BigSchedule
     {
         /// <summary>
         /// Timeslot jab 1
@@ -15,14 +17,14 @@
         /// <summary>
         /// Timeslot jab 2
         /// </summary>
-        public int T2 { get; set; }
+        public BigInteger T2 { get; set; }
 
         /// <summary>
         /// Hospital jab 2
         /// </summary>
-        public int M2 { get; set; }
+        public BigInteger M2 { get; set; }
 
-        public Schedule(int t1, int m1, int t2, int m2)
+        public BigSchedule(int t1, int m1, BigInteger t2, BigInteger m2)
         {
             T1 = t1;
             M1 = m1;

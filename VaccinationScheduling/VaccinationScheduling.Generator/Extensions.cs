@@ -8,7 +8,8 @@ namespace VaccinationScheduling.Generator
         /// <summary>
         /// Returns a random BigInteger that is within a specified range.
         /// The lower bound is inclusive, and the upper bound is exclusive.
-        /// <see href="https://stackoverflow.com/questions/17357760/how-can-i-generate-a-random-biginteger-within-a-certain-range"/>
+        /// <see href="
+        /// s://stackoverflow.com/questions/17357760/how-can-i-generate-a-random-biginteger-within-a-certain-range"/>
         /// </summary>
         public static BigInteger NextBigInteger(this Random random,
             BigInteger minValue, BigInteger maxValue)

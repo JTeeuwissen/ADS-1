@@ -1,6 +1,6 @@
 ﻿using System.Numerics;
 
-namespace VaccinationScheduling.Shared.BigNumber
+namespace VaccinationScheduling.Shared.BigNumbers
 {
     /// <summary>
     /// Global parameters, which are the same for all patients

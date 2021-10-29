@@ -12,7 +12,7 @@ namespace VaccinationScheduling.Online.Set
     public class CustomSet : IEquatable<CustomSet>
     {
         // https://stackoverflow.com/questions/10453256/fast-way-to-find-a-intersection-between-two-sets-of-numbers-one-defined-by-a-bi
-        // Method of finding the first: https://stackoverflow.com/questions/21279844/how-to-find-the-first-bit-that-is-different-in-c
+        // Method of finding the first 1 in an uint: https://stackoverflow.com/questions/21279844/how-to-find-the-first-bit-that-is-different-in-c
 
         public List<uint> Set = new List<uint>();
         public int Count = 0;
@@ -231,7 +231,7 @@ namespace VaccinationScheduling.Online.Set
                 return "";
             }
 
-            return " Not(" + sb.ToString() + ")";
+            return " BusyMachines(" + sb.ToString() + ")";
         }
 
         /// <summary>

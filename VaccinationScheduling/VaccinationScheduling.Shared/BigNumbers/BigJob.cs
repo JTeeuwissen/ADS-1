@@ -1,6 +1,6 @@
 ﻿using System.Numerics;
 
-namespace VaccinationScheduling.Shared.BigNumber
+namespace VaccinationScheduling.Shared.BigNumbers
 {
     // Using class so it is nullable
     /// <summary>

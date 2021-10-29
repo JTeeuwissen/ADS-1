@@ -1,7 +1,7 @@
 ﻿using System;
 using System.Numerics;
 
-namespace VaccinationScheduling.Shared.BigNumber
+namespace VaccinationScheduling.Shared.BigNumbers
 {
     public static class BigReadUtils
     {
