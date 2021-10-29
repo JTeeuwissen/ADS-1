@@ -1,4 +1,6 @@
 ﻿using System;
+using System.IO;
+using System.Numerics;
 using VaccinationScheduling.Shared;
 using static VaccinationScheduling.Shared.Extensions;
 
@@ -11,15 +13,17 @@ namespace VaccinationScheduling.Online
         /// </summary>
         public static void Main()
         {
-            Global global = ReadUtils.ReadGlobal();
+            Console.SetIn(new StreamReader("C:\\Users\\gerard\\Downloads\\bigints.txt"));
+
+            BigGlobal global = BigReadUtils.ReadGlobal();
             JobEnumerable jobs = new(global);
             Machines machines = new(global);
 
             // Go through each job one by one
-            foreach (Job job in jobs)
+            foreach (BigJob job in jobs)
             {
                 // Finds a spot and returns the machine numbers and timestamps
-                (int machine1, int machine2, int tFirstJab, int tSecondJab) = machines.FindGreedySpot(job);
+                (int machine1, int machine2, BigInteger tFirstJab, BigInteger tSecondJab) = machines.FindGreedySpot(job);
                 machines.ScheduleJobs(machine1, machine2, tFirstJab, tSecondJab);
                 // Print where the job is scheduled
                 Console.WriteLine(new Schedule(machine1, machine2, tFirstJab, tSecondJab));
