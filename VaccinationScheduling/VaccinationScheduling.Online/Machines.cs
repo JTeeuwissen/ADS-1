@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Numerics;
 using VaccinationScheduling.Online.Tree;
 using VaccinationScheduling.Shared;
+using VaccinationScheduling.Shared.BigNumber;
 using Range = VaccinationScheduling.Online.Tree.Range;
 
 namespace VaccinationScheduling.Online

@@ -1,8 +1,6 @@
 ﻿using System;
-using System.Collections;
-using System.Collections.Generic;
 using System.Numerics;
-using VaccinationScheduling.Online.List;
+using VaccinationScheduling.Online.Set;
 
 namespace VaccinationScheduling.Online.Tree
 {
@@ -94,22 +92,6 @@ namespace VaccinationScheduling.Online.Tree
         }
 
         /// <summary>
-        /// Gets the overlap between the current range and the range given to the
-        /// </summary>
-        /// <param name="tStart"></param>
-        /// <param name="tEnd"></param>
-        /// <returns>Returns the overlap between both items.</returns>
-        public (BigInteger, BigInteger?)? GetOverlap(BigInteger tStart, BigInteger? tEnd)
-        {
-            // Check for overlap
-            bool overlap = (endMaybe == null || tStart < endMaybe) && Start < tEnd;
-            if (!overlap) return null;
-
-            // There is overlapping range
-            return (BigInteger.Max(Start, tStart), EndMaybe is { } end ? BigInteger.Min(end, (BigInteger)tEnd) : tEnd);
-        }
-
-        /// <summary>
         /// Get the overlap between the current range and the start and end.
         /// </summary>
         /// <param name="tStart">Start of the range to get overlap of</param>
@@ -129,8 +111,12 @@ namespace VaccinationScheduling.Online.Tree
         /// ret<0 This one predecends other
         /// ret>0 This one follows other
         /// </returns>
-        public int CompareTo(Range other)
+        public int CompareTo(Range? other)
         {
+            if (other == null)
+            {
+                return -1;
+            }
             // Compare on properties in this order:
             // (10, 20) >= (0, 1)
             if (other.EndMaybe != null && Start > other.EndMaybe)

@@ -2,7 +2,7 @@
 using System.Collections.Generic;
 using System.Text;
 
-namespace VaccinationScheduling.Online.List
+namespace VaccinationScheduling.Online.Set
 {
     /// <summary>
     /// Implements a set using list of uintegers to speed up comparing sets.
@@ -167,9 +167,8 @@ namespace VaccinationScheduling.Online.List
         }
 
         /// <summary>
-        /// Finds first item that is not cointained in the current set.
+        /// Update what item is the first that is not cointained in the current set.
         /// </summary>
-        /// <returns></returns>
         private void UpdateFirstItemNotContained()
         {
             // Loop through the entire 'set'

@@ -1,10 +1,8 @@
 ﻿using System.Collections.Generic;
-using System.Collections;
-using System.Diagnostics.CodeAnalysis;
 using System.Text;
 using System;
-using VaccinationScheduling.Online.List;
 using System.Numerics;
+using VaccinationScheduling.Online.Set;
 
 namespace VaccinationScheduling.Online.Tree
 {
@@ -248,7 +246,7 @@ namespace VaccinationScheduling.Online.Tree
             BigInteger rightRange = findTwoRight(rangeEnd).Start;
 
             // We always need to know the neighbours too
-            Range first = null, second = null, third = null;
+            Range? first = null, second = null, third = null;
 
             // Enumerate the ranges
             IEnumerator<Range> ranges = FastEnumerateRangeInOrder(leftRange, rightRange).GetEnumerator();
@@ -442,7 +440,7 @@ namespace VaccinationScheduling.Online.Tree
             }
 
             // Create a new node.
-            node = new Node { item = item, Count = 1 };
+            node = new Node(item) { Count = 1 };
 
             // Link the node into the tree.
             if (wentLeft)

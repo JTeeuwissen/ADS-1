@@ -314,8 +314,7 @@ namespace VaccinationScheduling.Online.Tree
             }
 
             // Create a new node.
-            node = new Node();
-            node.item = item;
+            node = new Node(item);
             node.Count = 1;
 
             // Link the node into the tree.

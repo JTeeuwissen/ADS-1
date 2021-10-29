@@ -18,7 +18,7 @@ namespace VaccinationScheduling.Online.Tree
     public class Node
     {
         public Node? left, right;
-        public Range? item;
+        public Range item;
 
         private const uint REDMASK = 0x80000000;
         private uint count;
@@ -36,6 +36,11 @@ namespace VaccinationScheduling.Online.Tree
                 else
                     count &= ~REDMASK;
             }
+        }
+
+        public Node(Range range)
+        {
+            item = range;
         }
 
         /// <summary>
@@ -73,7 +78,7 @@ namespace VaccinationScheduling.Online.Tree
         /// <returns>The cloned node.</returns>
         public Node Clone()
         {
-            Node newNode = new() { item = item, count = count };
+            Node newNode = new(item) { count = count };
 
             if (left != null)
                 newNode.left = left.Clone();

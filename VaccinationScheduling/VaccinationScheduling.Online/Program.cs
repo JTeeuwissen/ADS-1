@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Numerics;
 using VaccinationScheduling.Shared;
+using VaccinationScheduling.Shared.BigNumber;
 using static VaccinationScheduling.Shared.Extensions;
 
 namespace VaccinationScheduling.Online

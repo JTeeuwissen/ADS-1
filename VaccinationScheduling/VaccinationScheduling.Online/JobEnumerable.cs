@@ -1,6 +1,6 @@
 ﻿using System.Collections;
 using System.Collections.Generic;
-using VaccinationScheduling.Shared;
+using VaccinationScheduling.Shared.BigNumber;
 
 namespace VaccinationScheduling.Online
 {

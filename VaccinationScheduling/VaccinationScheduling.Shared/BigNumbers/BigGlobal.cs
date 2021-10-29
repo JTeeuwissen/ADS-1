@@ -1,23 +1,25 @@
-﻿namespace VaccinationScheduling.Shared
+﻿using System.Numerics;
+
+namespace VaccinationScheduling.Shared.BigNumber
 {
     /// <summary>
     /// Global parameters, which are the same for all patients
     /// </summary>
-    public struct Global
+    public struct BigGlobal
     {
         /// <summary>
         /// Time it takes to get the first dose
         /// </summary>
-        public int TimeFirstDose;
+        public BigInteger TimeFirstDose;
         /// <summary>
         /// Time it takes to get the second dose
         /// </summary>
-        public int TimeSecondDose;
+        public BigInteger TimeSecondDose;
 
         /// <summary>
         /// The set time between the first and second dose
         /// </summary>
-        public int TimeGap;
+        public BigInteger TimeGap;
 
         /// <summary>
         /// Create an object that holds the global data
@@ -25,7 +27,7 @@
         /// <param name="timeFirstDose">Time the first dose takes</param>
         /// <param name="timeSecondDose">Time the second dose takes</param>
         /// <param name="timeGap">Minimum time between the first and second dose</param>
-        public Global(int timeFirstDose, int timeSecondDose, int timeGap)
+        public BigGlobal(BigInteger timeFirstDose, BigInteger timeSecondDose, BigInteger timeGap)
         {
             TimeFirstDose = timeFirstDose;
             TimeSecondDose = timeSecondDose;
