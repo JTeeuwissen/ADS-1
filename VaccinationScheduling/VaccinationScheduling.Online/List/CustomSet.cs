@@ -181,6 +181,7 @@ namespace VaccinationScheduling.Online.List
                     uint c = Set[i] ^ uint.MaxValue;
                     int result = getIndexOfRightMost1(c);
                     FirstItemNotContained = i * 32 + result;
+                    return;
                 }
             }
             // The first machine that is not contained is the maximum value.

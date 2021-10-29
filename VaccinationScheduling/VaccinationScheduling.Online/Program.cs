@@ -1,5 +1,4 @@
 ﻿using System;
-using System.IO;
 using System.Numerics;
 using VaccinationScheduling.Shared;
 using static VaccinationScheduling.Shared.Extensions;
