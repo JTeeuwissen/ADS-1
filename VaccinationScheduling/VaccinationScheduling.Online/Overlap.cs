@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Numerics;
 using System.Text;
 using System.Threading.Tasks;
 using Range = VaccinationScheduling.Online.Tree.Range;
@@ -15,8 +16,8 @@ namespace VaccinationScheduling.Online
         public bool StartOverlaps;
         public bool EndOverlaps;
         public bool Length1;
-        public int OverlapStart;
-        public int OverlapEnd;
+        public BigInteger OverlapStart;
+        public BigInteger OverlapEnd;
 
         /// <summary>
         /// Converts a range and tStart and tEnd to an overlap item containing information about how it overlaps.
@@ -24,7 +25,7 @@ namespace VaccinationScheduling.Online
         /// <param name="range">Range to get the overlap with</param>
         /// <param name="tStart">Start of the range to check overlap with range with</param>
         /// <param name="tEnd">Range needs to get compared to this endtime</param>
-        public Overlap(Range range, int tStart, int tEnd)
+        public Overlap(Range range, BigInteger tStart, BigInteger tEnd)
         {
             // Start overlaps
             if (range.Start >= tStart)

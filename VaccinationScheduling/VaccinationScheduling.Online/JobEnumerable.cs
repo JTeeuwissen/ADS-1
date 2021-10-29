@@ -4,24 +4,24 @@ using VaccinationScheduling.Shared;
 
 namespace VaccinationScheduling.Online
 {
-    public class JobEnumerable : IEnumerable<Job>
+    public class JobEnumerable : IEnumerable<BigJob>
     {
-        private readonly Global _global;
+        private readonly BigGlobal _global;
 
-        public JobEnumerable(Global global)
+        public JobEnumerable(BigGlobal global)
         {
             _global = global;
         }
 
         // Get the enumerator used in a foreach loop.
-        public IEnumerator<Job> GetEnumerator()
+        public IEnumerator<BigJob> GetEnumerator()
         {
             while (true)
             {
-                Job job;
+                BigJob job;
                 try
                 {
-                    job =  ReadUtils.ReadJob(_global);
+                    job = BigReadUtils.ReadJob(_global);
                 }
                 catch
                 {

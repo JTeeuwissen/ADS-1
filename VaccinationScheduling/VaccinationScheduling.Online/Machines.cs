@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Numerics;
 using VaccinationScheduling.Online.Tree;
 using VaccinationScheduling.Shared;
 using Range = VaccinationScheduling.Online.Tree.Range;
@@ -25,7 +26,7 @@ namespace VaccinationScheduling.Online
         /// Create a machine schedule
         /// </summary>
         /// <param name="global">Global parameters of the program</param>
-        public Machines(Global global)
+        public Machines(BigGlobal global)
         {
             freeRangesFirstJab = new RedBlackTree(global.TimeFirstDose);
             freeRangesSecondJab = new RedBlackTree(global.TimeSecondDose);
@@ -37,7 +38,7 @@ namespace VaccinationScheduling.Online
         /// </summary>
         /// <param name="job">Job to find a spot for</param>
         /// <returns>(machinNr1, machineNr2, tFirstJab, tSecondJab) of the found spot</returns>
-        public (int, int, int, int) FindGreedySpot(Job job)
+        public (int, int, BigInteger, BigInteger) FindGreedySpot(BigJob job)
         {
             // We use the both enumerators and go through them like the sliding window algorithm. Keeping track of what we have gone through for the second enumerator.
             IEnumerator<Range> firstJabEnumerate = freeRangesFirstJab.FastEnumerateRangeInOrder(job.MinFirstIntervalStart, job.MaxFirstIntervalStart).GetEnumerator();
@@ -49,8 +50,8 @@ namespace VaccinationScheduling.Online
 
             int bestScore = 0;
             // The initial best solution is to schedule on new machines as early as possible.
-            (int, int, int) bestFirstJabScore = (0, NrMachines, job.MinFirstIntervalStart);
-            (int, int, int) bestSecondJabScore = (0, NrMachines, job.MinFirstIntervalStart + job.MinGapIntervalStarts);
+            (int, int, BigInteger) bestFirstJabScore = (0, NrMachines, job.MinFirstIntervalStart);
+            (int, int, BigInteger) bestSecondJabScore = (0, NrMachines, job.MinFirstIntervalStart + job.MinGapIntervalStarts);
 
             // Whilst there are still possible places left
             while (firstJabEnumerate.MoveNext())
@@ -71,13 +72,13 @@ namespace VaccinationScheduling.Online
                     continue;
 
                 // Minimum T at which the first job can be scheduled is the minum of TMinJobStart and TRangeStart
-                int minTFirstJab = Math.Max(firstJabEnumerate.Current.Start, job.MinFirstIntervalStart);
+                BigInteger minTFirstJab = BigInteger.Max(firstJabEnumerate.Current.Start, job.MinFirstIntervalStart);
                 // Maximum T at which the first job can be schedule is the maximum of TMaxJobStart and TRangeStart
-                int maxTFirstJab = firstJabEnumerate.Current.EndMaybe == null ? job.MaxFirstIntervalStart : Math.Min(job.MaxFirstIntervalStart, (int)firstJabEnumerate.Current.EndMaybe);
+                BigInteger maxTFirstJab = firstJabEnumerate.Current.EndMaybe == null ? job.MaxFirstIntervalStart : BigInteger.Min(job.MaxFirstIntervalStart, (BigInteger)firstJabEnumerate.Current.EndMaybe);
 
                 // The second job needs to be within these values given the first bounds.
-                int minTSecondJab = minTFirstJab + job.MinGapIntervalStarts;
-                int maxTSecondJab = maxTFirstJab + job.MaxGapIntervalStarts;
+                BigInteger minTSecondJab = minTFirstJab + job.MinGapIntervalStarts;
+                BigInteger maxTSecondJab = maxTFirstJab + job.MaxGapIntervalStarts;
 
                 // Go through current 'cache'
                 for (int i = slidingWindowIndex; i < secondRanges.Count; i++)
@@ -100,12 +101,12 @@ namespace VaccinationScheduling.Online
                     }
 
                     // Better timeslot is found. Improve the solution
-                    (int, int) overlap = secondJabEnumerate.Current.GetOverlap(minTSecondJab, maxTSecondJab);
-                    int tSecondJab = overlap.Item1;
-                    int tFirstJab = Math.Max(minTFirstJab, tSecondJab - job.MaxGapIntervalStarts);
+                    (BigInteger, BigInteger) overlap = secondJabEnumerate.Current.GetOverlap(minTSecondJab, maxTSecondJab);
+                    BigInteger tSecondJab = overlap.Item1;
+                    BigInteger tFirstJab = BigInteger.Max(minTFirstJab, tSecondJab - job.MaxGapIntervalStarts);
 
-                    int firstJabMachine = firstJabEnumerate.Current.OccupiedMachineNrs.FindFirstItemNotContained();
-                    int secondJabMachine = secondJabEnumerate.Current.OccupiedMachineNrs.FindFirstItemNotContained();
+                    int firstJabMachine = firstJabEnumerate.Current.OccupiedMachineNrs.FirstItemNotContained;
+                    int secondJabMachine = secondJabEnumerate.Current.OccupiedMachineNrs.FirstItemNotContained;
                     bestFirstJabScore = (firstJabScore, firstJabMachine, tFirstJab);
                     bestSecondJabScore = (secondRanges[i].Item2, secondJabMachine, tSecondJab);
                     bestScore = firstJabScore + secondRanges[i].Item2;
@@ -131,13 +132,13 @@ namespace VaccinationScheduling.Online
                         break;
 
                     // A better solution was found. Get overlap and schedule both jabs.
-                    (int, int) overlap = secondJabEnumerate.Current.GetOverlap(minTSecondJab, maxTSecondJab);
-                    int tSecondJab = overlap.Item1;
-                    int tFirstJab = Math.Max(minTFirstJab, tSecondJab - job.MaxGapIntervalStarts);
+                    (BigInteger, BigInteger) overlap = secondJabEnumerate.Current.GetOverlap(minTSecondJab, maxTSecondJab);
+                    BigInteger tSecondJab = overlap.Item1;
+                    BigInteger tFirstJab = BigInteger.Max(minTFirstJab, tSecondJab - job.MaxGapIntervalStarts);
 
                     // Find the first machine numbers that are free at the given time.
-                    int firstJabMachine = firstJabEnumerate.Current.OccupiedMachineNrs.FindFirstItemNotContained();
-                    int secondJabMachine = secondJabEnumerate.Current.OccupiedMachineNrs.FindFirstItemNotContained();
+                    int firstJabMachine = firstJabEnumerate.Current.OccupiedMachineNrs.FirstItemNotContained;
+                    int secondJabMachine = secondJabEnumerate.Current.OccupiedMachineNrs.FirstItemNotContained;
 
                     // Update optimal solution with the new best.
                     bestFirstJabScore = (firstJabScore, firstJabMachine, tFirstJab);
@@ -157,7 +158,7 @@ namespace VaccinationScheduling.Online
         /// <param name="RightBound">Rightbound of the range</param>
         /// <param name="isFirstJab">Whether it is the first or second jab schedule that needs to get enumerated</param>
         /// <returns>A list containing the range items within the given bounds.</returns>
-        private List<Range> EnumerateToList(int leftBound, int RightBound, bool isFirstJab)
+        private List<Range> EnumerateToList(BigInteger leftBound, BigInteger RightBound, bool isFirstJab)
         {
             List<Range> firstJobs = new List<Range>();
             // Choose the correct tree.
@@ -177,7 +178,7 @@ namespace VaccinationScheduling.Online
         /// </summary>
         /// <param name="job">Object containing the job parameters</param>
         /// <returns>(machinNr1, machineNr2, tFirstJab, tSecondJab) of the best found spot</returns>
-        public (int, int, int, int) FindSmartGreedySpot(Job job)
+        public (int, int, BigInteger, BigInteger) FindSmartGreedySpot(Job job)
         {
             List<Range> firstJobRanges = EnumerateToList(job.MinFirstIntervalStart, job.MaxFirstIntervalStart, true);
             List<Range> secondJobRanges = EnumerateToList(job.MinFirstIntervalStart + job.MinGapIntervalStarts, job.MaxFirstIntervalStart + job.MaxGapIntervalStarts, false);
@@ -185,8 +186,8 @@ namespace VaccinationScheduling.Online
             int slidingWindowIndex = 0;
 
             int bestScore = (int)Score.NEWMACHINE + (int)Score.NEWMACHINE;
-            (Score, int, int) bestFirstJobScore = (Score.NEWMACHINE, NrMachines, job.MinFirstIntervalStart);
-            (Score, int, int) bestSecondJobScore = (Score.NEWMACHINE, NrMachines, job.MinFirstIntervalStart + job.MinGapIntervalStarts);
+            (Score, int, BigInteger) bestFirstJobScore = (Score.NEWMACHINE, NrMachines, job.MinFirstIntervalStart);
+            (Score, int, BigInteger) bestSecondJobScore = (Score.NEWMACHINE, NrMachines, job.MinFirstIntervalStart + job.MinGapIntervalStarts);
 
             // Whilst there are still possible places left
             for (int i = 0; i < firstJobRanges.Count; i++)
@@ -209,8 +210,8 @@ namespace VaccinationScheduling.Online
                 }
 
                 // The second job needs to be within these values given the first bounds.
-                int minTSecondJob = firstRangeOverlap.OverlapStart + job.MinGapIntervalStarts;
-                int maxTSecondJob = firstRangeOverlap.OverlapEnd + job.MaxGapIntervalStarts;
+                BigInteger minTSecondJob = firstRangeOverlap.OverlapStart + job.MinGapIntervalStarts;
+                BigInteger maxTSecondJob = firstRangeOverlap.OverlapEnd + job.MaxGapIntervalStarts;
 
                 for (int j = slidingWindowIndex; j < secondJobRanges.Count; j++)
                 {
@@ -235,7 +236,7 @@ namespace VaccinationScheduling.Online
                     {
                         continue;
                     }
-                    (Score, Score, int, int) scheduledTimes = getSmartScheduleTimes(job, firstJabScore, secondJabScores, firstRangeOverlap, secondRangeOverlap);
+                    (Score, Score, BigInteger, BigInteger) scheduledTimes = getSmartScheduleTimes(job, firstJabScore, secondJabScores, firstRangeOverlap, secondRangeOverlap);
                     // Score of the solution is not better than the best solution.
                     if ((int)scheduledTimes.Item1 + (int)scheduledTimes.Item2 <= bestScore)
                     {
@@ -283,7 +284,7 @@ namespace VaccinationScheduling.Online
             return (Score.EXISTINGMACHINE, Score.EXISTINGMACHINE);
         }
 
-        private (Score, Score, int, int) getSmartScheduleTimes(Job job, (Score, Score) firstJabScores, (Score, Score) secondJabScores, Overlap firstJobOverlap, Overlap secondJobOverlap)
+        private (Score, Score, BigInteger, BigInteger) getSmartScheduleTimes(Job job, (Score, Score) firstJabScores, (Score, Score) secondJabScores, Overlap firstJobOverlap, Overlap secondJobOverlap)
         {
             // Schedule it neighbouring another node
             switch ((firstJobOverlap.Length1, secondJobOverlap.Length1))
@@ -330,23 +331,23 @@ namespace VaccinationScheduling.Online
             // Try to schedule it so it at least neighbours one other machine
             if (firstJobOverlap.StartOverlaps)
             {
-                return (firstJabScores.Item2, secondJabScores.Item1, firstJobOverlap.OverlapStart, Math.Max(secondJobOverlap.OverlapStart, firstJobOverlap.OverlapStart + job.MinGapIntervalStarts));
+                return (firstJabScores.Item2, secondJabScores.Item1, firstJobOverlap.OverlapStart, BigInteger.Max(secondJobOverlap.OverlapStart, firstJobOverlap.OverlapStart + job.MinGapIntervalStarts));
             }
             else if (firstJobOverlap.EndOverlaps && firstJobOverlap.OverlapEnd + job.MinGapIntervalStarts <= secondJobOverlap.OverlapEnd)
             {
-                return (firstJabScores.Item2, secondJabScores.Item1, firstJobOverlap.OverlapEnd, Math.Max(secondJobOverlap.OverlapStart, firstJobOverlap.OverlapEnd + job.MinGapIntervalStarts));
+                return (firstJabScores.Item2, secondJabScores.Item1, firstJobOverlap.OverlapEnd, BigInteger.Max(secondJobOverlap.OverlapStart, firstJobOverlap.OverlapEnd + job.MinGapIntervalStarts));
             }
             else if (secondJobOverlap.StartOverlaps && secondJobOverlap.OverlapStart - job.MinGapIntervalStarts >= firstJobOverlap.OverlapStart)
             {
-                return (firstJabScores.Item1, secondJabScores.Item2, Math.Min(firstJobOverlap.OverlapEnd, secondJobOverlap.OverlapStart - job.MinGapIntervalStarts), secondJobOverlap.OverlapStart);
+                return (firstJabScores.Item1, secondJabScores.Item2, BigInteger.Min(firstJobOverlap.OverlapEnd, secondJobOverlap.OverlapStart - job.MinGapIntervalStarts), secondJobOverlap.OverlapStart);
             }
             else if (secondJobOverlap.EndOverlaps)
             {
-                return (firstJabScores.Item1, secondJabScores.Item2, Math.Min(firstJobOverlap.OverlapEnd, secondJobOverlap.OverlapEnd - job.MinGapIntervalStarts), secondJobOverlap.OverlapEnd);
+                return (firstJabScores.Item1, secondJabScores.Item2, BigInteger.Min(firstJobOverlap.OverlapEnd, secondJobOverlap.OverlapEnd - job.MinGapIntervalStarts), secondJobOverlap.OverlapEnd);
             }
             else
             {
-                return (firstJabScores.Item1, secondJabScores.Item1, firstJobOverlap.OverlapStart, Math.Max(secondJobOverlap.OverlapStart, firstJobOverlap.OverlapStart + job.MinGapIntervalStarts));
+                return (firstJabScores.Item1, secondJabScores.Item1, firstJobOverlap.OverlapStart, BigInteger.Max(secondJobOverlap.OverlapStart, firstJobOverlap.OverlapStart + job.MinGapIntervalStarts));
             }
         }
 
@@ -356,7 +357,7 @@ namespace VaccinationScheduling.Online
         /// <param name="tScheduled">Time at which the jab is scheduled</param>
         /// <param name="range">Range the jab will be scheduled at</param>
         /// <returns>The machineNr the jab will be scheduled on.</returns>
-        private int getMachineNr(int tScheduled, Range range)
+        private int getMachineNr(BigInteger tScheduled, Range range)
         {
             // Sits flush inbetween two jabs on the current machine
             if (range.MachineNrInBothNeighbours != null)
@@ -376,7 +377,7 @@ namespace VaccinationScheduling.Online
             // Does not border another jab
             else
             {
-                return range.OccupiedMachineNrs.FindFirstItemNotContained();
+                return range.OccupiedMachineNrs.FirstItemNotContained;
             }
         }
 
@@ -387,7 +388,7 @@ namespace VaccinationScheduling.Online
         /// <param name="firstJab">The range that the first job gets scheduled on</param>
         /// <param name="tSecondJab">The time at which to schedule the second job</param>
         /// <param name="secondJab">The range that the first job gets scheduled on</param>
-        public void ScheduleJobs(int firstMachineNr, int secondMachineNr, int tFirstJab, int tSecondJab)
+        public void ScheduleJobs(int firstMachineNr, int secondMachineNr, BigInteger tFirstJab, BigInteger tSecondJab)
         {
             if (firstMachineNr == NrMachines || secondMachineNr == NrMachines) NrMachines++;
 

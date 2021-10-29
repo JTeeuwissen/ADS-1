@@ -4,6 +4,7 @@ using System.Diagnostics.CodeAnalysis;
 using System.Text;
 using System;
 using VaccinationScheduling.Online.List;
+using System.Numerics;
 
 namespace VaccinationScheduling.Online.Tree
 {
@@ -15,7 +16,7 @@ namespace VaccinationScheduling.Online.Tree
         /// <summary>
         /// Length of the jab in the current tree.
         /// </summary>
-        public int JabLength = 0;
+        public BigInteger JabLength = 0;
 
         /// <summary>
         /// Finds the key in the tree. If multiple items in the tree have
@@ -25,7 +26,7 @@ namespace VaccinationScheduling.Online.Tree
         /// <param name="key">Key to search for.</param>
         /// <param name="item">Returns the found item, before replacing (if function returns true).</param>
         /// <returns>Returns item</returns>
-        public Range Find(int key)
+        public Range Find(BigInteger key)
         {
             Node current = root; // current search location in the tree
 
@@ -67,7 +68,7 @@ namespace VaccinationScheduling.Online.Tree
         /// <param name="first">The lower bound.</param>
         /// <param name="last">The upper bound.</param>
         /// <returns>A RangeTester delegate that tests for an item in the given range.</returns>
-        private RangeTester DoubleBoundedRangeTester(int first, int? last)
+        private RangeTester DoubleBoundedRangeTester(BigInteger first, BigInteger? last)
         {
             return delegate(Range item)
             {
@@ -78,7 +79,7 @@ namespace VaccinationScheduling.Online.Tree
                     return 0;
 
                 // ReSharper disable once ConvertIfStatementToReturnStatement
-                if (item.CompareTo((int)last) > 0)
+                if (item.CompareTo((BigInteger)last) > 0)
                     return 1; // item is after or equal to last
 
                 return 0; // item is between first and last.
@@ -91,7 +92,7 @@ namespace VaccinationScheduling.Online.Tree
         /// <param name="leftBound">Leftbound of the range to mark occupied</param>
         /// <param name="rightBound">Rightbound of the range to mark occupied</param>
         /// <param name="machineNr">MachineNr that gets occupied in the given range</param>
-        public void MarkRangeOccupied(int leftBound, int rightBound, int machineNr)
+        public void MarkRangeOccupied(BigInteger leftBound, BigInteger rightBound, int machineNr)
         {
             // Booleans to merge the first and last range item if needed.
             bool foundBeforeStart = false;
@@ -105,8 +106,8 @@ namespace VaccinationScheduling.Online.Tree
                 ranges.Add(rangesEnum.Current);
             }
 
-            int initialRangeStart = ranges[0].Start;
-            int initialRangeEnd = rightBound;
+            BigInteger initialRangeStart = ranges[0].Start;
+            BigInteger initialRangeEnd = rightBound;
 
             Range range = null;
             // Go through each range item and update it according to how it overlaps.
@@ -150,8 +151,8 @@ namespace VaccinationScheduling.Online.Tree
                     }
                     break;
                 }
-                int rangeStart = Math.Max(leftBound, range.Start);
-                int rangeEnd = Math.Min(rightBound, (int)range.EndMaybe);
+                BigInteger rangeStart = BigInteger.Max(leftBound, range.Start);
+                BigInteger rangeEnd = BigInteger.Min(rightBound, (BigInteger)range.EndMaybe);
                 // Range item inbetween
                 // tree ---------
                 // job  ---------
@@ -176,8 +177,8 @@ namespace VaccinationScheduling.Online.Tree
                 // Begin
                 else if(rangeStart == range.Start)
                 {
-                    int oldEnd = (int)range.EndMaybe;
-                        range.EndMaybe = rangeEnd;
+                    BigInteger oldEnd = (BigInteger)range.EndMaybe;
+                    range.EndMaybe = rangeEnd;
                     Insert(new Range(rangeEnd + 1, oldEnd, range.OccupiedMachineNrs.Clone()));
                     range.OccupiedMachineNrs.Add(machineNr);
                     if (!foundBeforeStart)
@@ -195,7 +196,7 @@ namespace VaccinationScheduling.Online.Tree
                 // Eind
                 else if (rangeEnd == range.EndMaybe)
                 {
-                    int oldEnd = (int)range.EndMaybe;
+                    BigInteger oldEnd = (BigInteger)range.EndMaybe;
                     range.EndMaybe = rangeStart - 1;
                     Range newRange = new(rangeStart, oldEnd, range.OccupiedMachineNrs.Clone());
                     newRange.OccupiedMachineNrs.Add(machineNr);
@@ -215,8 +216,8 @@ namespace VaccinationScheduling.Online.Tree
                 //             --
                 else
                 {
-                    int oldStart = range.Start;
-                    int? oldEnd = range.EndMaybe;
+                    BigInteger oldStart = range.Start;
+                    BigInteger? oldEnd = range.EndMaybe;
                     range.Start = rangeStart;
                     range.EndMaybe = rangeEnd;
                     Insert(new Range(oldStart, rangeStart - 1, range.OccupiedMachineNrs.Clone()));
@@ -240,11 +241,11 @@ namespace VaccinationScheduling.Online.Tree
         /// </summary>
         /// <param name="rangeStart"></param>
         /// <param name="rangeEnd"></param>
-        private void UpdateUniqueItemsInNeighbours(int rangeStart, int rangeEnd)
+        private void UpdateUniqueItemsInNeighbours(BigInteger rangeStart, BigInteger rangeEnd)
         {
             // We need to go two to the left and right since we need to update the neighbours just outside the range too
-            int leftRange = findTwoLeft(rangeStart).Start;
-            int rightRange = findTwoRight(rangeEnd).Start;
+            BigInteger leftRange = findTwoLeft(rangeStart).Start;
+            BigInteger rightRange = findTwoRight(rangeEnd).Start;
 
             // We always need to know the neighbours too
             Range first = null, second = null, third = null;
@@ -304,7 +305,7 @@ namespace VaccinationScheduling.Online.Tree
         /// </summary>
         /// <param name="tStart">Time to go left of the range item</param>
         /// <returns>Returns the range object of the</returns>
-        private Range findTwoLeft(int tStart)
+        private Range findTwoLeft(BigInteger tStart)
         {
             if (tStart == 0)
             {
@@ -323,7 +324,7 @@ namespace VaccinationScheduling.Online.Tree
         /// </summary>
         /// <param name="tEnd">Endtime of the previous range item</param>
         /// <returns>The range item two to the right of the given time</returns>
-        private Range findTwoRight(int tEnd)
+        private Range findTwoRight(BigInteger tEnd)
         {
             Range result = Find(tEnd);
             if (result.EndMaybe == null)
@@ -380,7 +381,7 @@ namespace VaccinationScheduling.Online.Tree
             }
 
             // Find the range after the current range
-            Range afterRange = Find((int)range.EndMaybe + 1);
+            Range afterRange = Find((BigInteger)range.EndMaybe + 1);
             // If occupied machines are equal, merge the range.
             if (range.OccupiedMachineNrs.Equals(afterRange.OccupiedMachineNrs))
             {
@@ -466,7 +467,7 @@ namespace VaccinationScheduling.Online.Tree
         /// <param name="leftBound">Leftbound of the enumeration</param>
         /// <param name="rightBound">Rightbound of the enumeration</param>
         /// <returns>An enumerable of the items.</returns>
-        public IEnumerable<Range> FastEnumerateRangeInOrder(int leftBound, int rightBound)
+        public IEnumerable<Range> FastEnumerateRangeInOrder(BigInteger leftBound, BigInteger rightBound)
         {
             Stack<(CommandType, Node, bool, bool, bool)> stack = new Stack<(CommandType, Node, bool, bool, bool)>();
             RangeTester rangeTester = DoubleBoundedRangeTester(leftBound, rightBound);
@@ -593,7 +594,7 @@ namespace VaccinationScheduling.Online.Tree
         /// <param name="leftBound">Leftbound of the range</param>
         /// <param name="rightBound">Rightbound of the range</param>
         /// <returns>Node that contains the highest node in the tree that corresponds with the range.</returns>
-        private Node findHighestParentWithinRange(int leftBound, int rightBound)
+        private Node findHighestParentWithinRange(BigInteger leftBound, BigInteger rightBound)
         {
             // Start at the root
             Node current = root;

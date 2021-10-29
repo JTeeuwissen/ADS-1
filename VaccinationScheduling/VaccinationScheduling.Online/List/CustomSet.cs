@@ -16,6 +16,7 @@ namespace VaccinationScheduling.Online.List
 
         public List<uint> Set = new List<uint>();
         public int Count = 0;
+        public int FirstItemNotContained = 0;
 
         // Masks to extract single bits from an integer
         static readonly uint[] masks = new uint[32]
@@ -33,10 +34,11 @@ namespace VaccinationScheduling.Online.List
             Add(i);
         }
 
-        public CustomSet(List<uint> set, int count)
+        public CustomSet(List<uint> set, int count, int firstItemNotContained)
         {
             Set = set;
             Count = count;
+            FirstItemNotContained = firstItemNotContained;
         }
 
         // Sources listed above, used to find which bit index is different
@@ -65,6 +67,10 @@ namespace VaccinationScheduling.Online.List
             {
                 Set[listIndex] += (uint)1 << bitIndex;
                 Count++;
+                if (FirstItemNotContained == machineNr)
+                {
+                    UpdateFirstItemNotContained();
+                }
             }
         }
 
@@ -164,7 +170,7 @@ namespace VaccinationScheduling.Online.List
         /// Finds first item that is not cointained in the current set.
         /// </summary>
         /// <returns></returns>
-        public int FindFirstItemNotContained()
+        private void UpdateFirstItemNotContained()
         {
             // Loop through the entire 'set'
             for (int i = 0; i < Set.Count; i++)
@@ -174,11 +180,11 @@ namespace VaccinationScheduling.Online.List
                 {
                     uint c = Set[i] ^ uint.MaxValue;
                     int result = getIndexOfRightMost1(c);
-                    return i * 32 + result;
+                    FirstItemNotContained = i * 32 + result;
                 }
             }
             // The first machine that is not contained is the maximum value.
-            return Count;
+            FirstItemNotContained = Count;
         }
 
         /// <summary>
@@ -197,7 +203,7 @@ namespace VaccinationScheduling.Online.List
         /// <returns>The cloned set</returns>
         public CustomSet Clone()
         {
-            return new CustomSet(new List<uint>(Set), Count);
+            return new CustomSet(new List<uint>(Set), Count, FirstItemNotContained);
         }
 
         /// <summary>

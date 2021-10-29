@@ -11,6 +11,7 @@
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
+using System.Numerics;
 
 namespace VaccinationScheduling.Online.Tree
 {
@@ -88,7 +89,7 @@ namespace VaccinationScheduling.Online.Tree
         /// Compare is used on the IComparer interface.
         /// </summary>
         /// <param name="comparer">The IComparer&lt;T&gt; used to sort keys.</param>
-        public RedBlackTree(int jobLength)
+        public RedBlackTree(BigInteger jobLength)
         {
             this.JabLength = jobLength;
             Debug.Assert(jobLength > 0);
